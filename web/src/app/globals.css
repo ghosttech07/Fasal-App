@@ -92,7 +92,8 @@ a {
   position: sticky;
   bottom: 0;
   padding: 12px var(--gutter-r) calc(env(safe-area-inset-bottom, 0px) + 16px) var(--gutter-l);
-  background: linear-gradient(to bottom, rgb(243 245 241 / 0), var(--ground) 16px);
+  background: var(--ground); /* solid: content scrolling underneath is hidden, never half-visible */
+  box-shadow: 0 -1px 0 var(--rule), 0 -8px 16px -12px rgb(21 32 26 / 0.25);
   display: grid;
   gap: 8px;
 }
@@ -260,7 +261,9 @@ a {
   cursor: pointer;
   background: var(--board);
   color: var(--chalk);
-  transition: background-color 120ms ease-out, transform 120ms ease-out;
+  transition:
+    background-color 120ms ease-out,
+    transform 120ms ease-out;
 }
 .btn:hover {
   background: #0c3122;

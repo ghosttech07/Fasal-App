@@ -2,8 +2,9 @@ import { Banknote, Check, Clock, Satellite } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Mark } from '@/components/mark';
-import { rupees, type Policy } from '@/lib/format';
+import { type Policy } from '@/lib/format';
 import { serverGet } from '@/lib/server-api';
+import { Money } from '@/components/money';
 
 export default async function DonePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,7 +20,9 @@ export default async function DonePage({ params }: { params: Promise<{ id: strin
         </span>
         <h1 id="done" className="board-title">
           Your {p.cropCode.toLowerCase()} is covered up to{' '}
-          <span className="gold">{rupees(p.sumInsuredPaise)}</span>
+          <span className="gold">
+            <Money paise={p.sumInsuredPaise} />
+          </span>
         </h1>
         <p className="board-sub">
           Policy{' '}

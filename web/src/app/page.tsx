@@ -23,6 +23,7 @@ import {
   type Policy,
 } from '@/lib/format';
 import { serverGet } from '@/lib/server-api';
+import { Money } from '@/components/money';
 
 type Plot = { id: string; areaAcres: number | null; createdAt: string };
 type Season = { code: string; namesI18n: unknown };
@@ -151,7 +152,9 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
           <div className="money">
             <Banknote size={30} aria-hidden="true" color="var(--board)" />
             <div style={{ display: 'grid', gap: 3 }}>
-              <span className="amt">{rupees(comingPaise)} on the way</span>
+              <span className="amt">
+                <Money paise={comingPaise} suffix=" on the way" />
+              </span>
               <span className="s">
                 Approved. Reaches your UPI by{' '}
                 {due

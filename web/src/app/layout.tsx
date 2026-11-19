@@ -4,6 +4,7 @@ import './globals.css';
 import './screens.css';
 import 'leaflet/dist/leaflet.css';
 import { Splash } from '@/components/splash';
+import { NetStatus } from '@/components/net-status';
 
 // Self-hosted at build time by next/font: no third-party font request on the farmer's data plan.
 const body = Barlow({
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               "try{if(sessionStorage.getItem('fs_splash'))document.documentElement.dataset.splash='skip'}catch(e){}",
           }}
         />
+        <NetStatus />
         <Splash />
         {children}
       </body>

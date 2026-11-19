@@ -3,6 +3,7 @@ import { PayButton } from '@/components/pay-button';
 import { StepBoard } from '@/components/step-board';
 import { day, en, rupees, type Me, type Policy } from '@/lib/format';
 import { serverGet } from '@/lib/server-api';
+import { Money } from '@/components/money';
 
 export default async function PayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,7 +21,9 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
         <p className="board-sub" style={{ marginTop: -12 }}>
           You pay today
         </p>
-        <div className="big-gold">{rupees(net)}</div>
+        <div className="big-gold">
+          <Money paise={net} />
+        </div>
         <p className="board-sub">
           {en(p.names)} for {p.cropCode.toLowerCase()}, up to {rupees(p.sumInsuredPaise)}
         </p>
