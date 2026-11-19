@@ -559,17 +559,24 @@
 html[data-splash='skip'] .splash {
   display: none;
 }
+/* Opening animation (approved idea A). Only transform and opacity animate, so the GPU runs it. */
 .splash {
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: grid;
   place-items: center;
-  background: #fff;
   cursor: pointer;
-  transition: background-color 300ms var(--ease-out) 150ms;
+}
+.splash::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  transition: opacity 300ms var(--ease-out) 150ms;
 }
 .splash .stage {
+  position: relative;
   display: grid;
   justify-items: center;
   gap: 12px;
@@ -577,11 +584,82 @@ html[data-splash='skip'] .splash {
   padding: 0 20px;
 }
 .splash .art {
+  position: relative;
   width: 136px;
   height: 136px;
+}
+.spl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: visible;
+  will-change: transform, opacity;
+}
+.spl-ink {
+  fill: none;
+  stroke: var(--board);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.spl-cloud {
+  animation: spl-drop 420ms var(--ease-out) 0ms both;
+}
+.spl-ground {
+  transform-origin: 50% 86.7%;
+  animation: spl-widen 420ms var(--ease-out) 120ms both;
+}
+.spl-stem {
+  transform-origin: 50% 85%;
+  animation: spl-rise 380ms var(--ease-out) 420ms both;
+}
+.spl-leaf-l {
+  transform-origin: 50% 74.2%;
+  --r: 24deg;
+  animation: spl-unfurl 480ms var(--ease-out) 640ms both;
+}
+.spl-leaf-r {
+  transform-origin: 50% 67.5%;
+  --r: -24deg;
+  animation: spl-unfurl 480ms var(--ease-out) 720ms both;
+}
+.spl-rain {
+  opacity: 0;
+  animation: spl-fall 600ms linear 2;
+}
+.spl-rain-0 {
+  animation-delay: 300ms;
+}
+.spl-rain-1 {
+  animation-delay: 480ms;
+}
+.spl-rain-2 {
+  animation-delay: 380ms;
+}
+.spl-rain-3 {
+  animation-delay: 560ms;
+}
+.spl-ripple {
+  opacity: 0;
+  animation: spl-ripple 420ms var(--ease-out) both;
+}
+.spl-ripple-0 {
+  transform-origin: 33.3% 84.2%;
+  animation-delay: 840ms;
+}
+.spl-ripple-1 {
+  transform-origin: 64.2% 84.6%;
+  animation-delay: 1100ms;
+}
+.spl-gold {
+  transform-origin: 50% 61%;
+  animation:
+    spl-goldfall 380ms linear 760ms both,
+    spl-squash 300ms var(--ease-out) 1140ms both;
 }
 .splash .fly {
+  position: relative;
   transform-origin: 0 0;
   display: inline-block;
 }
@@ -617,8 +695,10 @@ html[data-splash='skip'] .splash {
   animation: sp-fade 300ms ease-out 900ms both;
 }
 .splash.out {
-  background: rgb(255 255 255 / 0);
   pointer-events: none;
+}
+.splash.out::before {
+  opacity: 0;
 }
 .splash.out .art,
 .splash.out .leave,
@@ -642,68 +722,72 @@ html[data-splash='skip'] .splash {
   transform: none;
   transition: opacity 200ms ease;
 }
-.sp-ink {
-  fill: none;
-  stroke: var(--board);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.sp-draw {
-  stroke-dasharray: 1;
-  animation: sp-draw var(--d, 500ms) var(--ease-in-out) both;
-  animation-delay: var(--at, 0ms);
-}
-.sp-unfurl {
-  transform-box: fill-box;
-  animation: sp-unfurl 480ms var(--ease-out) both;
-  animation-delay: var(--at, 0ms);
-}
-.sp-rain {
-  stroke: var(--flood);
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  opacity: 0;
-  animation: sp-fall 600ms linear 2;
-  animation-delay: var(--at, 0ms);
-}
-.sp-ripple {
-  fill: none;
-  stroke: var(--flood);
-  stroke-width: 1.6;
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: sp-ripple 420ms var(--ease-out) both;
-  animation-delay: var(--at, 0ms);
-}
-.sp-gold {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation:
-    sp-goldfall 380ms linear 760ms both,
-    sp-squash 300ms var(--ease-out) 1140ms both;
-}
-.sp-leaf-l {
-  transform-origin: 100% 100%;
-  --r: 24deg;
-}
-.sp-leaf-r {
-  transform-origin: 0% 100%;
-  --r: -24deg;
-}
-@keyframes sp-draw {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-@keyframes sp-unfurl {
+@keyframes spl-drop {
   from {
     opacity: 0;
-    transform: rotate(var(--r, -22deg)) scale(0.9);
+    transform: translateY(-8px);
+  }
+}
+@keyframes spl-widen {
+  from {
+    opacity: 0;
+    transform: scaleX(0.2);
+  }
+}
+@keyframes spl-rise {
+  from {
+    opacity: 0;
+    transform: scaleY(0.15);
+  }
+}
+@keyframes spl-unfurl {
+  from {
+    opacity: 0;
+    transform: rotate(var(--r)) scale(0.9);
+  }
+}
+@keyframes spl-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+}
+@keyframes spl-ripple {
+  from {
+    opacity: 0.9;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+@keyframes spl-goldfall {
+  from {
+    opacity: 1;
+    transform: translateY(-66px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes spl-squash {
+  0% {
+    transform: scale(1.12, 0.84);
+  }
+  100% {
+    transform: none;
   }
 }
 @keyframes sp-rise {
@@ -717,57 +801,13 @@ html[data-splash='skip'] .splash {
     opacity: 0;
   }
 }
-@keyframes sp-fall {
-  0% {
-    opacity: 0;
-    transform: translateY(0);
-  }
-  12% {
-    opacity: 1;
-  }
-  88% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(44px);
-  }
-}
-@keyframes sp-ripple {
-  from {
-    opacity: 0.9;
-    transform: scale(0.4);
-  }
-  to {
-    opacity: 0;
-    transform: scale(1);
-  }
-}
-@keyframes sp-goldfall {
-  from {
-    opacity: 1;
-    transform: translateY(-58px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes sp-squash {
-  0% {
-    transform: scale(1.12, 0.84);
-  }
-  100% {
-    transform: none;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .splash *,
-  .splash {
+  .splash::before {
     animation: none !important;
   }
-  .sp-rain,
-  .sp-ripple {
+  .spl-rain,
+  .spl-ripple {
     opacity: 0;
   }
   .splash .word,
@@ -1217,15 +1257,6 @@ a.acc-row {
 }
 
 /* New screen content fades up 6 px; the board stays put so the eye keeps its place. */
-.work {
-  animation: page-in 260ms var(--ease-out) both;
-}
-@keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-}
 
 /* Long amounts on narrow phones shrink instead of colliding. */
 .tally dd {

@@ -11,13 +11,13 @@ const body = Barlow({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
   variable: '--font-body',
-  display: 'swap',
+  display: 'optional', // no late font swap: if the font is not ready at first paint, this visit keeps the fallback
 });
 const figures = Barlow_Semi_Condensed({
   subsets: ['latin'],
   weight: ['500', '600'],
   variable: '--font-figures',
-  display: 'swap',
+  display: 'optional', // no late font swap: if the font is not ready at first paint, this visit keeps the fallback
 });
 
 export const metadata: Metadata = {
