@@ -43,4 +43,4 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
-.impeccable/hook.cache.json
+**/.impeccable/hook.cache.json
