@@ -29,8 +29,9 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
       final res = await ref.read(apiProvider).post<Json>('/auth/otp/request', {
         'phone': controller.text,
       });
-      if (mounted)
+      if (mounted) {
         context.push('/otp', extra: {...res, 'phone': controller.text});
+      }
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {
