@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+coverage
+.turbo
+.expo
+android
+ios
+package-lock.json
+docs

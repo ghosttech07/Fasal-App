@@ -1,0 +1,44 @@
+{
+  "name": "fasalshield",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FasalShield - parametric micro-insurance for smallholder farmers",
+  "packageManager": "npm@11.20.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "api",
+    "web",
+    "admin",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.5",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.4",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.37.0"
+  },
+  "allowScripts": {
+    "@prisma/engines@6.19.3": true,
+    "@embedded-postgres/windows-x64@18.6.0-beta.19": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.2": true,
+    "prisma@6.19.3": true,
+    "@prisma/client@6.19.3": true
+  }
+}

@@ -1,0 +1,35 @@
+import type { Metadata, Viewport } from 'next';
+import { Barlow, Barlow_Semi_Condensed } from 'next/font/google';
+import './globals.css';
+import './screens.css';
+import 'leaflet/dist/leaflet.css';
+import { Splash } from '@/components/splash';
+
+// Self-hosted at build time by next/font: no third-party font request on the farmer's data plan.
+const body = Barlow({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-body', display: 'swap' });
+const figures = Barlow_Semi_Condensed({ subsets: ['latin'], weight: ['500', '600'], variable: '--font-figures', display: 'swap' });
+
+export const metadata: Metadata = {
+  title: 'FasalShield',
+  description: 'Crop cover that pays when the rain fails',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#123F2C',
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html lang="en" className={`${body.variable} ${figures.variable}`} suppressHydrationWarning>
+      <body>
+        {/* Before paint: skip the opening animation if this tab already played it. */}
+        <script dangerouslySetInnerHTML={{ __html: "try{if(sessionStorage.getItem('fs_splash'))document.documentElement.dataset.splash='skip'}catch(e){}" }} />
+        <Splash />
+        {children}
+      </body>
+    </html>
+  );
+}

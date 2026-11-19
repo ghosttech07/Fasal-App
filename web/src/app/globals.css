@@ -1,0 +1,350 @@
+@import 'tailwindcss';
+
+/*
+ * Mandi rate board: a flat painted-green board owns the top of every screen and carries the figures;
+ * below it, a pale limewash ground with ink text. Light only: used outdoors in daylight.
+ */
+:root {
+  --board: #123f2c;
+  --board-rule: rgb(255 255 255 / 0.16);
+  --chalk: #ffffff;
+  --chalk-2: #cfe0d6; /* 9.6:1 on board */
+  --marigold: #f5b800; /* money figures on the board, 8.3:1 */
+
+  --ground: #f3f5f1;
+  --surface: #ffffff;
+  --ink: #15201a;
+  --ink-2: #47534c; /* 7.4:1 on ground */
+  --rule: #d3d9d2;
+  --field: #8a958e; /* input borders, 3:1 on surface */
+
+  --drought: #a44f0a;
+  --flood: #1e4fd0;
+  --danger: #b42318;
+  --ok-bg: #e3efe7;
+
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --fig: var(--font-figures), var(--font-body), system-ui, sans-serif;
+  --gutter-l: max(20px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(20px, env(safe-area-inset-right, 0px));
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1); /* entrances */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1); /* on-screen moves */
+  color-scheme: light;
+}
+
+html {
+  background: var(--ground);
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 1.5;
+  caret-color: var(--board);
+  -webkit-tap-highlight-color: transparent;
+}
+::selection {
+  background: var(--marigold);
+  color: var(--ink);
+}
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+.board :focus-visible {
+  outline-color: var(--marigold);
+}
+a {
+  color: var(--board);
+  text-underline-offset: 3px;
+}
+
+/* ---------- Screen frame: board on top, work area, action pinned to the thumb ---------- */
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  max-width: 560px;
+  margin: 0 auto;
+  background: var(--ground);
+}
+.board {
+  background: var(--board);
+  color: var(--chalk);
+  padding: calc(env(safe-area-inset-top, 0px) + 20px) var(--gutter-r) 24px var(--gutter-l);
+  display: grid;
+  gap: 16px;
+}
+.work {
+  flex: 1;
+  padding: 24px var(--gutter-r) 24px var(--gutter-l);
+  display: grid;
+  gap: 20px;
+  align-content: start;
+}
+.work > * {
+  min-width: 0;
+}
+.action {
+  position: sticky;
+  bottom: 0;
+  padding: 12px var(--gutter-r) calc(env(safe-area-inset-bottom, 0px) + 16px) var(--gutter-l);
+  background: linear-gradient(to bottom, rgb(243 245 241 / 0), var(--ground) 16px);
+  display: grid;
+  gap: 8px;
+}
+
+/* ---------- Board type ---------- */
+.mark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: 0.01em;
+}
+.board-title {
+  margin: 0;
+  font-family: var(--fig);
+  font-weight: 600;
+  font-size: clamp(28px, 8vw, 36px);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.board-sub {
+  margin: 0;
+  color: var(--chalk-2);
+  font-size: 17px;
+}
+.fig {
+  font-family: var(--fig);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* The posted rate card: condition on the left, rupees on the right, hairline rules like a painted board. */
+.rates {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.rates caption {
+  text-align: left;
+  color: var(--chalk-2);
+  font-size: 15px;
+  padding-bottom: 6px;
+}
+.rates th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--chalk-2);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--board-rule);
+}
+.rates th:last-child,
+.rates td:last-child {
+  text-align: right;
+}
+.rates td {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--board-rule);
+  font-size: 17px;
+}
+.rates td.amt {
+  font-family: var(--fig);
+  font-weight: 600;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--marigold);
+}
+
+/* ---------- Work-area type ---------- */
+.h1 {
+  margin: 0;
+  font-family: var(--fig);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.lead {
+  margin: 0;
+  color: var(--ink-2);
+}
+.hint {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 16px;
+}
+
+/* ---------- Controls ---------- */
+.label {
+  display: block;
+  font-weight: 500;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.field {
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  background: var(--surface);
+  border: 1.5px solid var(--field);
+  border-radius: 8px;
+  padding: 0 16px;
+  gap: 12px;
+}
+.field:focus-within {
+  border-color: var(--board);
+  box-shadow: 0 0 0 3px rgb(18 63 44 / 0.18);
+}
+.field[data-invalid='true'] {
+  border-color: var(--danger);
+}
+.field input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-family: var(--fig);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  padding: 12px 0;
+}
+.field input::placeholder {
+  color: #737d77; /* 4.5:1 on white */
+  letter-spacing: 0;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 400;
+}
+.prefix {
+  font-family: var(--fig);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--ink-2);
+  padding-right: 12px;
+  border-right: 1px solid var(--rule);
+}
+.error {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--danger);
+  font-size: 16px;
+  margin: 8px 0 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 20px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 18px;
+  cursor: pointer;
+  background: var(--board);
+  color: var(--chalk);
+  transition: background-color 120ms ease-out, transform 120ms ease-out;
+}
+.btn:hover {
+  background: #0c3122;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  background: #c9d0ca;
+  color: var(--ink-2);
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-quiet {
+  background: transparent;
+  color: var(--board);
+  min-height: 48px;
+  padding: 0 4px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.btn-quiet:hover {
+  background: rgb(18 63 44 / 0.06);
+}
+.btn-quiet:disabled {
+  background: transparent;
+  text-decoration: none;
+}
+
+/* Painted label: square-cornered tag, colour plus an icon plus a word. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--ok-bg);
+  color: var(--board);
+}
+.tag-dev {
+  background: #fff4cc;
+  color: #5c4500;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+  .btn {
+    transition: none;
+  }
+}
+/* Short phones (≤ 680 px tall): keep the input above the pinned action. */
+@media (max-height: 680px) {
+  .board {
+    gap: 10px;
+    padding-bottom: 16px;
+  }
+  .board-sub {
+    font-size: 16px;
+  }
+  .rates td {
+    padding: 6px 0;
+  }
+  .rates td.amt {
+    font-size: 22px;
+  }
+  .work {
+    padding-top: 16px;
+  }
+}
+@media (min-width: 600px) {
+  .screen {
+    border-left: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+  }
+}

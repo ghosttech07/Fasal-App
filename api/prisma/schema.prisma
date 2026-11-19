@@ -1,0 +1,389 @@
+// FasalShield data model - mirrors docs/02-Technical-Architecture.md §5.1.
+// Money = Int paise / BigInt where sums can grow; rates = basis points.
+// shortcut: plot location is lat/lng + computed 0.05° grid cell (no PostGIS geometry) because local dev
+// runs embedded Postgres without PostGIS; switch to geometry(Point,4326) + ST_Contains when on Docker/RDS (Part 11.1).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  FARMER
+  AGENT
+  FPO_ADMIN
+  PRODUCT_MANAGER
+  CLAIMS_OPS
+  PAYOUT_APPROVER
+  SYS_ADMIN
+  REINSURER
+  REGULATOR
+}
+
+enum KycStatus {
+  NONE
+  BASIC
+  VERIFIED
+  REJECTED
+}
+
+enum WalletStatus {
+  PENDING
+  VERIFIED
+  INVALID
+}
+
+enum PolicyStatus {
+  QUOTED
+  PENDING_PAYMENT
+  PENDING_REVIEW
+  IN_WAITING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum TriggerEventStatus {
+  DETECTED
+  HELD
+  APPROVED
+  REJECTED
+  PAID
+}
+
+enum PayoutStatus {
+  AWAITING_BATCH
+  QUEUED
+  SENT
+  PENDING
+  SUCCESS
+  FAILED_RETRYABLE
+  ACTION_REQUIRED
+  REVERSED
+  CANCELLED
+}
+
+model Organisation {
+  id          String   @id @default(uuid())
+  type        String // INSURER | FPO | REINSURER | REGULATOR | PLATFORM
+  name        String
+  countryCode String   @default("IN")
+  users       User[]
+  agents      Agent[]
+  products    Product[]
+}
+
+/// Staff accounts (admin dashboard). Called "Admin" in the build brief.
+model User {
+  id          String       @id @default(uuid())
+  orgId       String
+  org         Organisation @relation(fields: [orgId], references: [id])
+  email       String       @unique
+  passwordHash String?
+  totpSecretEnc String?
+  role        Role
+  status      String       @default("ACTIVE")
+  createdAt   DateTime     @default(now())
+}
+
+model Agent {
+  id        String       @id @default(uuid())
+  orgId     String
+  org       Organisation @relation(fields: [orgId], references: [id])
+  phoneE164 String       @unique
+  name      String
+  agentCode String       @unique
+  status    String       @default("ACTIVE")
+  farmers   Farmer[]
+}
+
+model Farmer {
+  id                 String         @id @default(uuid())
+  farmerCode         String         @unique
+  phoneE164          String         @unique
+  nameEnc            String? // AES-256-GCM (lib/crypto)
+  language           String         @default("en")
+  districtCode       String?
+  village            String?
+  yearOfBirth        Int?
+  idDocType          String?
+  idDocLast4         String?
+  idDocHash          String?        @unique // HMAC - duplicate detection without raw IDs
+  kycStatus          KycStatus      @default(NONE)
+  onboardedByAgentId String?
+  onboardedByAgent   Agent?         @relation(fields: [onboardedByAgentId], references: [id])
+  createdAt          DateTime       @default(now())
+  consents           Consent[]
+  wallets            Wallet[]
+  plots              Plot[]
+  policies           Policy[]
+  notifications      Notification[]
+}
+
+model Consent {
+  id            String    @id @default(uuid())
+  farmerId      String
+  farmer        Farmer    @relation(fields: [farmerId], references: [id])
+  purpose       String
+  noticeVersion String
+  language      String
+  channel       String
+  grantedAt     DateTime  @default(now())
+  withdrawnAt   DateTime?
+}
+
+model OtpRequest {
+  id        String   @id @default(uuid())
+  phoneE164 String
+  otpHash   String
+  attempts  Int      @default(0)
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phoneE164, createdAt])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  familyId  String
+  subjectId String
+  role      Role
+  deviceId  String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([familyId])
+}
+
+model Wallet {
+  id              String       @id @default(uuid())
+  farmerId        String
+  farmer          Farmer       @relation(fields: [farmerId], references: [id])
+  type            String       @default("UPI_VPA")
+  handleEnc       String
+  handleMasked    String
+  handleHash      String // HMAC - detects one VPA shared by many farmers (FRD-06)
+  verifiedName    String?
+  status          WalletStatus @default(PENDING)
+  coolingOffUntil DateTime?
+  isPrimary       Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  payouts         Payout[]
+
+  @@index([handleHash])
+}
+
+model GridCell {
+  id           Int            @id // row * 10000 + col on the 0.05° grid
+  minLat       Float
+  minLng       Float
+  districtCode String?
+  isCropland   Boolean        @default(true)
+  plots        Plot[]
+  readings     IndexReading[]
+}
+
+model Plot {
+  id                 String   @id @default(uuid())
+  farmerId           String
+  farmer             Farmer   @relation(fields: [farmerId], references: [id])
+  lat                Float
+  lng                Float
+  boundary           Json? // GeoJSON polygon (walk-the-boundary)
+  areaAcres          Float?
+  gpsAccuracyM       Float?
+  captureMethod      String   @default("GPS_PIN")
+  gridCellId         Int
+  gridCell           GridCell @relation(fields: [gridCellId], references: [id])
+  verificationStatus String   @default("UNVERIFIED")
+  createdAt          DateTime @default(now())
+  policies           Policy[]
+}
+
+model Crop {
+  code     String @id
+  namesI18n Json
+  icon     String
+}
+
+model Season {
+  code      String   @id // e.g. RABI_2026
+  namesI18n Json
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+}
+
+model Product {
+  id         String           @id @default(uuid())
+  insurerOrgId String
+  insurer    Organisation     @relation(fields: [insurerOrgId], references: [id])
+  code       String           @unique
+  namesI18n  Json
+  peril      String // DROUGHT | FLOOD
+  status     String           @default("ACTIVE")
+  versions   ProductVersion[]
+}
+
+model ProductVersion {
+  id                String    @id @default(uuid())
+  productId         String
+  product           Product   @relation(fields: [productId], references: [id])
+  version           Int
+  status            String    @default("DRAFT") // DRAFT | PENDING_APPROVAL | PUBLISHED | RETIRED
+  rules             Json
+  rulesSha256       String?
+  premiumRateBp     Int
+  subsidyBp         Int       @default(0) // share of premium paid by sponsor
+  sumInsuredPaise   Int // cover per acre; a policy covers this × the plot area
+  seasonCode        String
+  eligibleDistricts String[]
+  eligibleCrops     String[]
+  enrolmentCutoff   DateTime  @db.Date
+  waitingPeriodDays Int       @default(7)
+  publishedAt       DateTime?
+  policies          Policy[]
+  triggerEvents     TriggerEvent[]
+
+  @@unique([productId, version])
+}
+
+model Policy {
+  id               String          @id @default(uuid())
+  policyNumber     String?         @unique
+  farmerId         String
+  farmer           Farmer          @relation(fields: [farmerId], references: [id])
+  plotId           String
+  plot             Plot            @relation(fields: [plotId], references: [id])
+  productVersionId String
+  productVersion   ProductVersion  @relation(fields: [productVersionId], references: [id])
+  cropCode         String
+  sumInsuredPaise  Int
+  premiumPaise     Int
+  subsidyPaise     Int
+  paidOutPaise     Int             @default(0)
+  status           PolicyStatus    @default(PENDING_PAYMENT)
+  coverStart       DateTime?       @db.Date
+  coverEnd         DateTime?       @db.Date
+  createdAt        DateTime        @default(now())
+  payments         PremiumPayment[]
+  triggerEvents    TriggerEvent[]
+}
+
+model PremiumPayment {
+  id          String        @id @default(uuid())
+  policyId    String
+  policy      Policy        @relation(fields: [policyId], references: [id])
+  payerType   String        @default("FARMER")
+  amountPaise Int
+  gatewayRef  String        @unique
+  status      PaymentStatus @default(CREATED)
+  createdAt   DateTime      @default(now())
+}
+
+model IngestionRun {
+  id              String         @id @default(uuid())
+  dataSourceCode  String
+  fromDate        DateTime       @db.Date
+  toDate          DateTime       @db.Date
+  status          String         @default("RUNNING")
+  readingsWritten Int            @default(0)
+  note            String?
+  createdAt       DateTime       @default(now())
+  readings        IndexReading[]
+}
+
+/// Append-only: revisions insert a higher sourceVersion, never update.
+model IndexReading {
+  gridCellId     Int
+  gridCell       GridCell     @relation(fields: [gridCellId], references: [id])
+  obsDate        DateTime     @db.Date
+  metric         String // RAIN_MM | SOIL_MOISTURE | NDVI | FLOOD_FRACTION
+  dataSourceCode String
+  sourceVersion  Int          @default(1)
+  value          Float
+  ingestionRunId String
+  ingestionRun   IngestionRun @relation(fields: [ingestionRunId], references: [id])
+
+  @@id([gridCellId, obsDate, metric, dataSourceCode, sourceVersion])
+}
+
+model TriggerEvent {
+  id                String             @id @default(uuid())
+  policyId          String
+  policy            Policy             @relation(fields: [policyId], references: [id])
+  productVersionId  String
+  productVersion    ProductVersion     @relation(fields: [productVersionId], references: [id])
+  peril             String
+  phaseId           String
+  slabLevel         Int
+  indexValue        Float
+  threshold         Float
+  payoutAmountPaise Int
+  evidencePath      String
+  evidenceSha256    String
+  engineVersion     String
+  status            TriggerEventStatus @default(DETECTED)
+  detectedAt        DateTime           @default(now())
+  payout            Payout?
+
+  // Idempotency: one event per policy/phase/slab (docs FS-0103).
+  @@unique([policyId, productVersionId, phaseId, slabLevel])
+}
+
+model Payout {
+  id             String       @id @default(uuid())
+  triggerEventId String       @unique
+  triggerEvent   TriggerEvent @relation(fields: [triggerEventId], references: [id])
+  walletId       String?
+  wallet         Wallet?      @relation(fields: [walletId], references: [id])
+  amountPaise    Int
+  idempotencyKey String       @unique
+  status         PayoutStatus @default(AWAITING_BATCH)
+  utr            String?
+  slaDueAt       DateTime
+  creditedAt     DateTime?
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id           String   @id @default(uuid())
+  farmerId     String
+  farmer       Farmer   @relation(fields: [farmerId], references: [id])
+  templateCode String
+  channel      String // SMS | WHATSAPP | PUSH | IN_APP
+  language     String
+  body         String
+  status       String   @default("SENT")
+  readAt       DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([farmerId, createdAt])
+}
+
+/// Append-only, hash-chained (docs Security §8).
+model AuditLog {
+  seq        Int      @id @default(autoincrement())
+  at         DateTime @default(now())
+  actorType  String
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  diff       Json?
+  prevHash   String
+  hash       String   @unique
+}
