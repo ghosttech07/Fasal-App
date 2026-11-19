@@ -37,8 +37,7 @@ export default function OtpPage() {
     try {
       await post('/api/session/verify', { requestId: pending.requestId, otp });
       handoff.set('fs_otp', '');
-      router.replace('/');
-      router.refresh();
+      window.location.replace('/'); // full load: the new session cookie and a fresh server render, no client cache
     } catch (err) {
       setError(messageFor(err));
       setBusy(false);
@@ -51,8 +50,15 @@ export default function OtpPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await post<{ requestId: string; devOtp?: string }>('/api/session/request', { phone: pending.phone });
-      const next = { phone: pending.phone, requestId: res.requestId, devOtp: res.devOtp ?? null, sentAt: Date.now() };
+      const res = await post<{ requestId: string; devOtp?: string }>('/api/session/request', {
+        phone: pending.phone,
+      });
+      const next = {
+        phone: pending.phone,
+        requestId: res.requestId,
+        devOtp: res.devOtp ?? null,
+        sentAt: Date.now(),
+      };
       handoff.set('fs_otp', JSON.stringify(next));
       setPending(next);
       setCode('');
@@ -74,7 +80,10 @@ export default function OtpPage() {
           Enter the 6-digit code
         </h1>
         <p className="board-sub">
-          Sent by SMS to <span className="fig" style={{ color: 'var(--chalk)', fontSize: 19 }}>{formatPhone(pending.phone)}</span>
+          Sent by SMS to{' '}
+          <span className="fig" style={{ color: 'var(--chalk)', fontSize: 19 }}>
+            {formatPhone(pending.phone)}
+          </span>
         </p>
       </section>
 
@@ -124,13 +133,24 @@ export default function OtpPage() {
           {pending.devOtp ? (
             <p>
               <span className="tag tag-dev">
-                Test code <span className="fig" style={{ fontSize: 17, letterSpacing: '0.08em' }}>{pending.devOtp}</span>
+                Test code{' '}
+                <span className="fig" style={{ fontSize: 17, letterSpacing: '0.08em' }}>
+                  {pending.devOtp}
+                </span>
               </span>
             </p>
           ) : null}
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' }}>
-            <button className="btn btn-quiet" type="button" style={{ width: 'auto' }} disabled={wait > 0 || busy} onClick={resend}>
+          <div
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' }}
+          >
+            <button
+              className="btn btn-quiet"
+              type="button"
+              style={{ width: 'auto' }}
+              disabled={wait > 0 || busy}
+              onClick={resend}
+            >
               {wait > 0 ? (
                 <>
                   Send again in <span className="fig">{wait}s</span>
@@ -139,7 +159,12 @@ export default function OtpPage() {
                 'Send the code again'
               )}
             </button>
-            <button className="btn btn-quiet" type="button" style={{ width: 'auto' }} onClick={() => router.replace('/login')}>
+            <button
+              className="btn btn-quiet"
+              type="button"
+              style={{ width: 'auto' }}
+              onClick={() => router.replace('/login')}
+            >
               Change number
             </button>
           </div>

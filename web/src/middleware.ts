@@ -1,5 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { ACCESS_COOKIE, REFRESH_COOKIE, clearTokenCookies, refreshTokens, setTokenCookies } from '@/lib/session';
+import {
+  ACCESS_COOKIE,
+  REFRESH_COOKIE,
+  clearTokenCookies,
+  refreshTokens,
+  setTokenCookies,
+} from '@/lib/session';
 
 const PUBLIC = ['/login', '/otp'];
 
@@ -9,7 +15,8 @@ export async function middleware(req: NextRequest) {
   const access = req.cookies.get(ACCESS_COOKIE)?.value;
   const refresh = req.cookies.get(REFRESH_COOKIE)?.value;
 
-  if (isPublic) return access || refresh ? NextResponse.redirect(new URL('/', req.url)) : NextResponse.next();
+  if (isPublic)
+    return access || refresh ? NextResponse.redirect(new URL('/', req.url)) : NextResponse.next();
   if (access) return NextResponse.next();
 
   const tokens = refresh ? await refreshTokens(refresh) : null;

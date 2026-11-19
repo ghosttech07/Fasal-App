@@ -29,7 +29,11 @@ export function PayButton({ id, label }: { id: string; label: string }) {
           }
         }}
       >
-        {busy ? <LoaderCircle className="spin" size={22} aria-hidden="true" /> : <Landmark size={22} aria-hidden="true" />}
+        {busy ? (
+          <LoaderCircle className="spin" size={22} aria-hidden="true" />
+        ) : (
+          <Landmark size={22} aria-hidden="true" />
+        )}
         {busy ? 'Waiting for your UPI app' : label}
       </button>
       <p className="hint" style={{ textAlign: 'center', fontSize: 14 }}>

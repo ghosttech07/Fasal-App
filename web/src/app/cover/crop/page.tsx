@@ -25,7 +25,11 @@ export default function CropPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([get<Crop[]>('/api/fs/catalog/crops'), get<Season[]>('/api/fs/catalog/seasons'), get<Plot[]>('/api/fs/me/plots')])
+    Promise.all([
+      get<Crop[]>('/api/fs/catalog/crops'),
+      get<Season[]>('/api/fs/catalog/seasons'),
+      get<Plot[]>('/api/fs/me/plots'),
+    ])
       .then(([c, s, p]) => {
         setCrops([...c].sort((a, b) => ORDER.indexOf(a.code) - ORDER.indexOf(b.code)));
         setSeasons(s);
@@ -42,7 +46,13 @@ export default function CropPage() {
       <div className="work" style={{ gap: 14 }}>
         <div className="crops" role="group" aria-label="Crop">
           {crops.map((c) => (
-            <button key={c.code} type="button" className="crop" aria-pressed={crop === c.code} onClick={() => setCrop(c.code)}>
+            <button
+              key={c.code}
+              type="button"
+              className="crop"
+              aria-pressed={crop === c.code}
+              onClick={() => setCrop(c.code)}
+            >
               {crop === c.code ? (
                 <span className="ok">
                   <Check size={16} aria-hidden="true" />
@@ -59,7 +69,13 @@ export default function CropPage() {
           </span>
           <div className="chips" role="group" aria-labelledby="season-label">
             {seasons.map((s) => (
-              <button key={s.code} type="button" className="chip" aria-pressed={season === s.code} onClick={() => setSeason(s.code)}>
+              <button
+                key={s.code}
+                type="button"
+                className="chip"
+                aria-pressed={season === s.code}
+                onClick={() => setSeason(s.code)}
+              >
                 {season === s.code ? <Check size={16} aria-hidden="true" /> : null}
                 {en(s.namesI18n)}
               </button>
@@ -69,8 +85,19 @@ export default function CropPage() {
         {error ? <FormError>{error}</FormError> : null}
       </div>
       <div className="action">
-        <button className="btn" type="button" disabled={!crop || !season || !plot} onClick={() => router.push(`/cover/choose?crop=${crop}&season=${season}&plot=${plot!.id}`)}>
-          {name ? `See covers for ${en(name.namesI18n).replace(/ \(.*\)$/, '').toLowerCase()}` : 'Choose a crop'}
+        <button
+          className="btn"
+          type="button"
+          disabled={!crop || !season || !plot}
+          onClick={() =>
+            router.push(`/cover/choose?crop=${crop}&season=${season}&plot=${plot!.id}`)
+          }
+        >
+          {name
+            ? `See covers for ${en(name.namesI18n)
+                .replace(/ \(.*\)$/, '')
+                .toLowerCase()}`
+            : 'Choose a crop'}
           <ArrowRight size={22} aria-hidden="true" />
         </button>
       </div>

@@ -1,6 +1,14 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { ACCESS_COOKIE, API_URL, REFRESH_COOKIE, clearTokenCookies, refreshTokens, setTokenCookies, type Tokens } from '@/lib/session';
+import {
+  ACCESS_COOKIE,
+  API_URL,
+  REFRESH_COOKIE,
+  clearTokenCookies,
+  refreshTokens,
+  setTokenCookies,
+  type Tokens,
+} from '@/lib/session';
 
 /**
  * Same-origin proxy for browser calls: /api/fs/<path> → API /api/v1/<path>, with the bearer token
@@ -16,7 +24,10 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
   const send = (token?: string) =>
     fetch(target, {
       method: req.method,
-      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      headers: {
+        'content-type': 'application/json',
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
       body,
       cache: 'no-store',
     });

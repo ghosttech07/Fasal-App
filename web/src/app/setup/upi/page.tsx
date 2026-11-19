@@ -37,7 +37,12 @@ export default function UpiPage() {
 
   return (
     <main className="screen">
-      <StepBoard back={{ href: '/setup/field', label: 'Back' }} step={3} title="Where should we send money" sub="Payouts go only to this UPI ID" />
+      <StepBoard
+        back={{ href: '/setup/field', label: 'Back' }}
+        step={3}
+        title="Where should we send money"
+        sub="Payouts go only to this UPI ID"
+      />
       <form className="contents" onSubmit={check} noValidate>
         <div className="work">
           <div>
@@ -77,7 +82,10 @@ export default function UpiPage() {
                   </span>
                 </div>
               </div>
-              <p className="small">If this is not your name, change the UPI ID. Money sent to the wrong account cannot be taken back.</p>
+              <p className="small">
+                If this is not your name, change the UPI ID. Money sent to the wrong account cannot
+                be taken back.
+              </p>
             </>
           ) : null}
         </div>

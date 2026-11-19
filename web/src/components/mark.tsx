@@ -4,7 +4,13 @@ import { Droplet } from 'lucide-react';
 export function Mark() {
   return (
     <div className="mark">
-      <Droplet size={20} strokeWidth={2} aria-hidden="true" color="var(--marigold)" fill="var(--marigold)" />
+      <Droplet
+        size={20}
+        strokeWidth={2}
+        aria-hidden="true"
+        color="var(--marigold)"
+        fill="var(--marigold)"
+      />
       <span>FasalShield</span>
     </div>
   );

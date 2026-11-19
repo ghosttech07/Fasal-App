@@ -8,7 +8,12 @@ export const rupees = (paise: number) => `₹${inr.format(Math.round(paise / 100
 /** "2026-11-01" → "1 Nov" (or "1 Nov 2026" with year). */
 export function day(iso: string | Date, year = false) {
   const d = typeof iso === 'string' ? new Date(iso.length === 10 ? `${iso}T00:00:00Z` : iso) : iso;
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}), timeZone: 'Asia/Kolkata' });
+  return d.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    ...(year ? { year: 'numeric' } : {}),
+    timeZone: 'Asia/Kolkata',
+  });
 }
 
 export const num1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
@@ -20,13 +25,19 @@ export const DISTRICTS = [
   ['NANDED', 'Nanded'],
 ] as const;
 
-const PHASES: Record<string, string> = { P1_SOWING: 'Sowing', P2_GROWTH: 'Growth', P3_GRAIN: 'Grain filling', P1_SEASON: 'Whole season' };
+const PHASES: Record<string, string> = {
+  P1_SOWING: 'Sowing',
+  P2_GROWTH: 'Growth',
+  P3_GRAIN: 'Grain filling',
+  P1_SEASON: 'Whole season',
+};
 export const phaseName = (id: string) => PHASES[id] ?? id.replace(/^P\d_/, '').toLowerCase();
 
 export const en = (names: unknown) => (names as { en?: string } | null)?.en ?? '';
 
 /** Days between two ISO dates (UTC midnight), inclusive of the start day. */
-export const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000) + 1;
+export const daysBetween = (from: string, to: string) =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000) + 1;
 
 export const todayIso = () => new Date().toISOString().slice(0, 10);
 

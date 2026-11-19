@@ -31,8 +31,18 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await post<{ requestId: string; devOtp?: string }>('/api/session/request', { phone });
-      handoff.set('fs_otp', JSON.stringify({ phone, requestId: res.requestId, devOtp: res.devOtp ?? null, sentAt: Date.now() }));
+      const res = await post<{ requestId: string; devOtp?: string }>('/api/session/request', {
+        phone,
+      });
+      handoff.set(
+        'fs_otp',
+        JSON.stringify({
+          phone,
+          requestId: res.requestId,
+          devOtp: res.devOtp ?? null,
+          sentAt: Date.now(),
+        }),
+      );
       router.push('/otp');
     } catch (err) {
       setError(messageFor(err));

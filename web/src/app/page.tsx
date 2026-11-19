@@ -1,10 +1,27 @@
-import { ArrowRight, Banknote, Check, ChevronRight, CloudRain, Satellite, Sun } from 'lucide-react';
+import {
+  ArrowRight,
+  CircleUserRound,
+  Banknote,
+  Check,
+  ChevronRight,
+  CloudRain,
+  Satellite,
+  Sun,
+} from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Mark } from '@/components/mark';
 import { RainMeter } from '@/components/rain-meter';
-import { SignOut } from '@/components/sign-out';
-import { daysBetween, day, en, nextSetupStep, phaseName, rupees, type Me, type Policy } from '@/lib/format';
+import {
+  daysBetween,
+  day,
+  en,
+  nextSetupStep,
+  phaseName,
+  rupees,
+  type Me,
+  type Policy,
+} from '@/lib/format';
 import { serverGet } from '@/lib/server-api';
 
 type Plot = { id: string; areaAcres: number | null; createdAt: string };
@@ -15,9 +32,17 @@ export default async function Home() {
   const step = nextSetupStep(me);
   if (step) redirect(step);
 
-  const [policies, plots, seasons] = await Promise.all([serverGet<Policy[]>('/policies'), serverGet<Plot[]>('/me/plots'), serverGet<Season[]>('/catalog/seasons')]);
+  const [policies, plots, seasons] = await Promise.all([
+    serverGet<Policy[]>('/policies'),
+    serverGet<Plot[]>('/me/plots'),
+    serverGet<Season[]>('/catalog/seasons'),
+  ]);
   const live = policies.filter((p) => p.status === 'ACTIVE' || p.status === 'IN_WAITING');
-  return live.length ? <RainBoard me={me} policies={live} /> : <BeforeBuying me={me} plot={plots[0]} season={seasons[0]} />;
+  return live.length ? (
+    <RainBoard me={me} policies={live} />
+  ) : (
+    <BeforeBuying me={me} plot={plots[0]} season={seasons[0]} />
+  );
 }
 
 function BeforeBuying({ me, plot, season }: { me: Me; plot?: Plot; season?: Season }) {
@@ -26,9 +51,7 @@ function BeforeBuying({ me, plot, season }: { me: Me; plot?: Plot; season?: Seas
       <section className="board" aria-labelledby="who">
         <div className="top">
           <Mark />
-          <span className="fig" style={{ color: 'var(--chalk-2)', fontSize: 15 }}>
-            {me.farmerCode}
-          </span>
+          <AccountButton />
         </div>
         <h1 id="who" className="board-title">
           {me.name}
@@ -64,7 +87,6 @@ function BeforeBuying({ me, plot, season }: { me: Me; plot?: Plot; season?: Seas
         <Link className="btn" href="/cover/crop">
           Buy cover for this season <ArrowRight size={22} aria-hidden="true" />
         </Link>
-        <SignOut />
       </div>
     </main>
   );
@@ -72,7 +94,11 @@ function BeforeBuying({ me, plot, season }: { me: Me; plot?: Plot; season?: Seas
 
 /** The phase a farmer cares about today: the one in progress, else the latest finished, else the first. */
 function currentPhase(p: Policy) {
-  return p.phases.find((s) => s.state === 'IN_PROGRESS') ?? [...p.phases].reverse().find((s) => s.state === 'COMPLETE') ?? p.phases[0];
+  return (
+    p.phases.find((s) => s.state === 'IN_PROGRESS') ??
+    [...p.phases].reverse().find((s) => s.state === 'COMPLETE') ??
+    p.phases[0]
+  );
 }
 
 function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
@@ -82,25 +108,40 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
   const flood = p.indexType === 'FLOOD_EXCESS_RAIN';
   const coming = p.triggerEvents.filter((e) => e.payoutStatus && e.payoutStatus !== 'SUCCESS');
   const comingPaise = coming.reduce((s, e) => s + e.payoutAmountPaise, 0);
-  const due = coming.map((e) => e.slaDueAt).filter(Boolean).sort()[0];
+  const due = coming
+    .map((e) => e.slaDueAt)
+    .filter(Boolean)
+    .sort()[0];
 
   return (
     <main className="screen">
       <section className="board" aria-label="Rain on your field">
         <div className="top">
           <Mark />
-          {phase && plan ? (
-            <span className="tag tag-board">
-              {phaseName(phase.phaseId)}
-              {phase.state === 'IN_PROGRESS' ? ` · day ${phase.daysElapsed} of ${daysBetween(plan.from, plan.to)}` : phase.state === 'UPCOMING' ? ` · starts ${day(plan.from)}` : ' · ended'}
-            </span>
-          ) : null}
+          <AccountButton />
         </div>
+        {phase && plan ? (
+          <span className="board-sub" style={{ fontSize: 15, marginTop: -6 }}>
+            {phaseName(phase.phaseId)}
+            {phase.state === 'IN_PROGRESS'
+              ? ` · day ${phase.daysElapsed} of ${daysBetween(plan.from, plan.to)}`
+              : phase.state === 'UPCOMING'
+                ? ` · starts ${day(plan.from)}`
+                : ' · ended'}
+          </span>
+        ) : null}
         {phase && plan && phase.state !== 'UPCOMING' ? (
-          <RainMeter phase={phase} slabs={p.slabs} phaseAmountPaise={plan.amountPaise} flood={flood} rollingDays={p.rollingDays ?? 3} />
+          <RainMeter
+            phase={phase}
+            slabs={p.slabs}
+            phaseAmountPaise={plan.amountPaise}
+            flood={flood}
+            rollingDays={p.rollingDays ?? 3}
+          />
         ) : (
           <p className="board-title" style={{ fontSize: 26 }}>
-            Cover starts {plan ? day(plan.from) : 'soon'}. We start measuring rain on your field that day.
+            Cover starts {plan ? day(plan.from) : 'soon'}. We start measuring rain on your field
+            that day.
           </p>
         )}
       </section>
@@ -111,7 +152,13 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
             <Banknote size={30} aria-hidden="true" color="var(--board)" />
             <div style={{ display: 'grid', gap: 3 }}>
               <span className="amt">{rupees(comingPaise)} on the way</span>
-              <span className="s">Approved. Reaches your UPI by {due ? `${day(due)}, ${new Date(due).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })}` : 'tomorrow'}.</span>
+              <span className="s">
+                Approved. Reaches your UPI by{' '}
+                {due
+                  ? `${day(due)}, ${new Date(due).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })}`
+                  : 'tomorrow'}
+                .
+              </span>
             </div>
           </div>
         ) : null}
@@ -119,11 +166,16 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
         <div className="ruled">
           <div>
             <span className="k" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              {flood ? <CloudRain size={18} aria-hidden="true" color="var(--flood)" /> : <Sun size={18} aria-hidden="true" color="var(--drought)" />}
+              {flood ? (
+                <CloudRain size={18} aria-hidden="true" color="var(--flood)" />
+              ) : (
+                <Sun size={18} aria-hidden="true" color="var(--drought)" />
+              )}
               {en(p.names)}, {p.cropCode.toLowerCase()}
             </span>
             <span className="tag">
-              <Check size={14} aria-hidden="true" /> {p.status === 'ACTIVE' ? 'Active' : 'Starts soon'}
+              <Check size={14} aria-hidden="true" />{' '}
+              {p.status === 'ACTIVE' ? 'Active' : 'Starts soon'}
             </span>
           </div>
           <div>
@@ -145,8 +197,17 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
               Your other covers
             </h2>
             {policies.slice(1).map((o) => (
-              <Link key={o.id} href={`/policy/${o.id}`} className="money quiet" style={{ textDecoration: 'none', color: 'inherit' }}>
-                {o.peril === 'FLOOD' ? <CloudRain size={22} aria-hidden="true" color="var(--flood)" /> : <Sun size={22} aria-hidden="true" color="var(--drought)" />}
+              <Link
+                key={o.id}
+                href={`/policy/${o.id}`}
+                className="money quiet"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                {o.peril === 'FLOOD' ? (
+                  <CloudRain size={22} aria-hidden="true" color="var(--flood)" />
+                ) : (
+                  <Sun size={22} aria-hidden="true" color="var(--drought)" />
+                )}
                 <span style={{ flex: 1 }}>
                   {en(o.names)} · {rupees(o.sumInsuredPaise)}
                 </span>
@@ -157,15 +218,23 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
         ) : null}
 
         <p className="small" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Satellite size={18} aria-hidden="true" /> Rain checked every day for {me.name?.split(' ')[0]}&rsquo;s field
+          <Satellite size={18} aria-hidden="true" /> Rain checked every day for{' '}
+          {me.name?.split(' ')[0]}&rsquo;s field
         </p>
       </div>
       <div className="action">
         <Link className="btn btn-line" href="/cover/crop">
           Buy another cover
         </Link>
-        <SignOut />
       </div>
     </main>
+  );
+}
+
+function AccountButton() {
+  return (
+    <Link href="/account" className="acc-btn" aria-label="Your account">
+      <CircleUserRound size={24} aria-hidden="true" />
+    </Link>
   );
 }

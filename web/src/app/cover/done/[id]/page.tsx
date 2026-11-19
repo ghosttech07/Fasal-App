@@ -18,10 +18,15 @@ export default async function DonePage({ params }: { params: Promise<{ id: strin
           <Check size={22} aria-hidden="true" /> COVERED
         </span>
         <h1 id="done" className="board-title">
-          Your {p.cropCode.toLowerCase()} is covered up to <span className="gold">{rupees(p.sumInsuredPaise)}</span>
+          Your {p.cropCode.toLowerCase()} is covered up to{' '}
+          <span className="gold">{rupees(p.sumInsuredPaise)}</span>
         </h1>
         <p className="board-sub">
-          Policy <span className="fig" style={{ color: 'var(--chalk)', fontSize: 18 }}>{p.policyNumber}</span> · SMS sent
+          Policy{' '}
+          <span className="fig" style={{ color: 'var(--chalk)', fontSize: 18 }}>
+            {p.policyNumber}
+          </span>{' '}
+          · SMS sent
         </p>
       </section>
       <div className="work">

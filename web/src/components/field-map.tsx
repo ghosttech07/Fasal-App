@@ -30,13 +30,36 @@ function Tap({ onTap }: { onTap?: (p: Pin) => void }) {
 }
 
 /** OpenStreetMap view of the farmer's field. Tapping places the pin only when `onTap` is given (demo mode). */
-export default function FieldMap({ pin, accuracyM, onTap }: { pin: Pin | null; accuracyM: number | null; onTap?: (p: Pin) => void }) {
+export default function FieldMap({
+  pin,
+  accuracyM,
+  onTap,
+}: {
+  pin: Pin | null;
+  accuracyM: number | null;
+  onTap?: (p: Pin) => void;
+}) {
   return (
-    <MapContainer center={pin ?? LATUR} zoom={pin ? 16 : 10} scrollWheelZoom={false} attributionControl>
+    <MapContainer
+      center={pin ?? LATUR}
+      zoom={pin ? 16 : 10}
+      scrollWheelZoom={false}
+      attributionControl
+    >
       {/* shortcut: public OSM tiles are fine for development and demos; use a paid tile provider or self-hosted tiles before launch (OSM tile usage policy). */}
-      <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap" maxZoom={19} />
+      <TileLayer
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap"
+        maxZoom={19}
+      />
       {pin ? <Marker position={pin} icon={icon} /> : null}
-      {pin && accuracyM ? <Circle center={pin} radius={accuracyM} pathOptions={{ color: '#1E4FD0', weight: 1, fillOpacity: 0.12 }} /> : null}
+      {pin && accuracyM ? (
+        <Circle
+          center={pin}
+          radius={accuracyM}
+          pathOptions={{ color: '#1E4FD0', weight: 1, fillOpacity: 0.12 }}
+        />
+      ) : null}
       <Follow pin={pin} />
       <Tap onTap={onTap} />
     </MapContainer>

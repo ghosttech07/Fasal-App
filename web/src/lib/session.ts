@@ -8,12 +8,20 @@ export const REFRESH_COOKIE = 'fs_rt';
 
 export type Tokens = { accessToken: string; refreshToken: string; expiresIn: number };
 
-const base = { httpOnly: true, sameSite: 'lax' as const, secure: process.env.NODE_ENV === 'production', path: '/' };
+const base = {
+  httpOnly: true,
+  sameSite: 'lax' as const,
+  secure: process.env.NODE_ENV === 'production',
+  path: '/',
+};
 const REFRESH_MAX_AGE = 30 * 24 * 60 * 60; // matches JWT_REFRESH_TTL_SECONDS
 
 /** Tokens live only in httpOnly cookies, so page scripts (and any XSS) never see them. */
 export function setTokenCookies(res: NextResponse, t: Tokens) {
-  res.cookies.set(ACCESS_COOKIE, t.accessToken, { ...base, maxAge: Math.max(60, t.expiresIn - 30) });
+  res.cookies.set(ACCESS_COOKIE, t.accessToken, {
+    ...base,
+    maxAge: Math.max(60, t.expiresIn - 30),
+  });
   res.cookies.set(REFRESH_COOKIE, t.refreshToken, { ...base, maxAge: REFRESH_MAX_AGE });
 }
 

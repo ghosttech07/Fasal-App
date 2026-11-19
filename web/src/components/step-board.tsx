@@ -3,7 +3,19 @@ import Link from 'next/link';
 import { Mark } from './mark';
 
 /** Board band for task screens: back link or mark, optional 3-step progress, title and one line under it. */
-export function StepBoard({ back, step, title, sub, children }: { back?: { href: string; label: string }; step?: 1 | 2 | 3; title: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode }) {
+export function StepBoard({
+  back,
+  step,
+  title,
+  sub,
+  children,
+}: {
+  back?: { href: string; label: string };
+  step?: 1 | 2 | 3;
+  title: React.ReactNode;
+  sub?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
   return (
     <section className="board" aria-labelledby="screen-title">
       <div className="top">

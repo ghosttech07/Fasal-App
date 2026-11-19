@@ -19,7 +19,8 @@ export async function POST(req: Request) {
   if (!r.ok) return NextResponse.json(data, { status: r.status });
 
   const { user, ...tokens } = data as Tokens & { user: { role: string; isNew: boolean } };
-  if (user?.role !== 'FARMER') return NextResponse.json({ code: 'role_not_supported' }, { status: 403 });
+  if (user?.role !== 'FARMER')
+    return NextResponse.json({ code: 'role_not_supported' }, { status: 403 });
   const res = NextResponse.json({ user });
   setTokenCookies(res, tokens);
   return res;

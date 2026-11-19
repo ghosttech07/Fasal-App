@@ -15,7 +15,11 @@ export const get = <T>(url: string) => send<T>('GET', url);
 async function send<T>(method: string, url: string, body?: unknown): Promise<T> {
   let r: Response;
   try {
-    r = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+    r = await fetch(url, {
+      method,
+      headers: { 'content-type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
   } catch {
     throw new ApiError('network', 0);
   }
@@ -27,7 +31,12 @@ async function send<T>(method: string, url: string, body?: unknown): Promise<T> 
 
 /** Plain-language messages for API problem codes (frontend spec §3: specific, with the way out). */
 export function messageFor(e: unknown): string {
-  const code = e instanceof ApiError ? (e.status === 429 && e.code === 'unknown' ? 'busy' : e.code) : 'unknown';
+  const code =
+    e instanceof ApiError
+      ? e.status === 429 && e.code === 'unknown'
+        ? 'busy'
+        : e.code
+      : 'unknown';
   if (code === 'busy') return 'Too many tries. Wait a minute, then try again.';
   switch (code) {
     case 'network':

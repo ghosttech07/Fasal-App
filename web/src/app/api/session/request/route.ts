@@ -7,11 +7,17 @@ export async function POST(req: Request) {
   try {
     const r = await fetch(`${API_URL}/api/v1/auth/otp/request`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-forwarded-for': req.headers.get('x-forwarded-for') ?? '' },
+      headers: {
+        'content-type': 'application/json',
+        'x-forwarded-for': req.headers.get('x-forwarded-for') ?? '',
+      },
       body,
       cache: 'no-store',
     });
-    return new NextResponse(await r.text(), { status: r.status, headers: { 'content-type': r.headers.get('content-type') ?? 'application/json' } });
+    return new NextResponse(await r.text(), {
+      status: r.status,
+      headers: { 'content-type': r.headers.get('content-type') ?? 'application/json' },
+    });
   } catch {
     return NextResponse.json({ code: 'network' }, { status: 503 });
   }

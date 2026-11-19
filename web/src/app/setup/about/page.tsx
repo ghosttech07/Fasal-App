@@ -48,7 +48,8 @@ export default function AboutPage() {
     setBusy(true);
     setError(null);
     try {
-      if (!me?.onboarding.consent) await post('/api/fs/me/consents', { purposes: ['INSURANCE_SERVICING'], language: 'en' });
+      if (!me?.onboarding.consent)
+        await post('/api/fs/me/consents', { purposes: ['INSURANCE_SERVICING'], language: 'en' });
       await patch('/api/fs/me', {
         name: name.trim(),
         districtCode: district,
@@ -72,9 +73,16 @@ export default function AboutPage() {
               <ShieldCheck size={22} aria-hidden="true" color="var(--board)" />
               Your data, your choice
             </strong>
-            We use your name, phone and field location only to give you cover and send you money. Only your insurer sees it.
+            We use your name, phone and field location only to give you cover and send you money.
+            Only your insurer sees it.
             <label className="check">
-              <input type="checkbox" checked={agree} disabled={me?.onboarding.consent} onChange={(e) => setAgree(e.target.checked)} />I agree
+              <input
+                type="checkbox"
+                checked={agree}
+                disabled={me?.onboarding.consent}
+                onChange={(e) => setAgree(e.target.checked)}
+              />
+              I agree
             </label>
           </div>
 
@@ -83,7 +91,13 @@ export default function AboutPage() {
               Full name
             </label>
             <div className="field text">
-              <input id="name" autoComplete="name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
+              <input
+                id="name"
+                autoComplete="name"
+                value={name}
+                maxLength={80}
+                onChange={(e) => setName(e.target.value)}
+              />
             </div>
           </div>
 
@@ -93,7 +107,12 @@ export default function AboutPage() {
                 District
               </label>
               <div className="field">
-                <select id="district" className="select" value={district} onChange={(e) => setDistrict(e.target.value)}>
+                <select
+                  id="district"
+                  className="select"
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                >
                   <option value="" disabled>
                     Choose
                   </option>
@@ -111,7 +130,12 @@ export default function AboutPage() {
                 Village
               </label>
               <div className="field text">
-                <input id="village" value={village} maxLength={80} onChange={(e) => setVillage(e.target.value)} />
+                <input
+                  id="village"
+                  value={village}
+                  maxLength={80}
+                  onChange={(e) => setVillage(e.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -123,7 +147,12 @@ export default function AboutPage() {
                   ID type
                 </label>
                 <div className="field">
-                  <select id="idtype" className="select" value={idType} onChange={(e) => setIdType(e.target.value)}>
+                  <select
+                    id="idtype"
+                    className="select"
+                    value={idType}
+                    onChange={(e) => setIdType(e.target.value)}
+                  >
                     {ID_TYPES.map(([code, label]) => (
                       <option key={code} value={code}>
                         {label}
@@ -138,7 +167,13 @@ export default function AboutPage() {
                   ID number
                 </label>
                 <div className="field text" data-invalid={!idOk && idNumber.length > 0}>
-                  <input id="idnum" value={idNumber} maxLength={20} autoCapitalize="characters" onChange={(e) => setIdNumber(e.target.value.replace(/\s/g, ''))} />
+                  <input
+                    id="idnum"
+                    value={idNumber}
+                    maxLength={20}
+                    autoCapitalize="characters"
+                    onChange={(e) => setIdNumber(e.target.value.replace(/\s/g, ''))}
+                  />
                 </div>
               </div>
             </div>

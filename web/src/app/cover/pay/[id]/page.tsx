@@ -13,7 +13,10 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
 
   return (
     <main className="screen">
-      <StepBoard back={{ href: '/cover/crop', label: 'Covers' }} title={<span className="sr-only">Pay premium</span>}>
+      <StepBoard
+        back={{ href: '/cover/crop', label: 'Covers' }}
+        title={<span className="sr-only">Pay premium</span>}
+      >
         <p className="board-sub" style={{ marginTop: -12 }}>
           You pay today
         </p>
@@ -57,7 +60,9 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
             </div>
           ) : null}
         </div>
-        <p className="small">The premium goes to the insurer. FasalShield never holds your money.</p>
+        <p className="small">
+          The premium goes to the insurer. FasalShield never holds your money.
+        </p>
       </div>
       <div className="action">
         <PayButton id={id} label={`Pay ${rupees(net)} with UPI`} />
