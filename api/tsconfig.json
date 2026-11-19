@@ -5,5 +5,5 @@
     "outDir": "dist",
     "types": ["node", "jest"]
   },
-  "include": ["src", "scripts", "prisma"]
+  "include": ["src", "scripts", "prisma", "api"]
 }

@@ -82,6 +82,10 @@ const baseSchema = z.object({
   KYC_PROVIDER: z.enum(['mock', 'digilocker']).default('mock'),
   WEATHER_PROVIDER: z.enum(['simulator', 'chirps', 'imerg']).default('simulator'),
   ENABLE_SIMULATOR: booleanFromString.default('false'),
+  /** Demo deployments without an SMS provider: return the OTP in the API response. Forbidden in prod. */
+  DEMO_SHOW_OTP: booleanFromString.default('false'),
+  /** Shared secret Vercel Cron sends as `Authorization: Bearer <CRON_SECRET>`. */
+  CRON_SECRET: z.string().min(16).optional(),
 
   PAYMENT_API_KEY: z.string().optional(),
   PAYMENT_API_SECRET: z.string().optional(),
@@ -146,6 +150,9 @@ export const serverEnvSchema = baseSchema.superRefine((env, ctx) => {
   if (env.APP_ENV !== 'prod') return;
 
   // ---- Production-only guards ----
+  if (env.DEMO_SHOW_OTP) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['DEMO_SHOW_OTP'], message: 'DEMO_SHOW_OTP must be false in prod' });
+  }
   if (env.ENABLE_SIMULATOR) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

@@ -1,9 +1,7 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import type { Prisma } from '@prisma/client';
 import { formatPaise } from '@fasalshield/shared';
 import { prisma } from '../../db';
-import { dataDir, env } from '../../env';
+import { env } from '../../env';
 import { weather } from '../../adapters';
 import { audit, canonical } from '../../lib/audit';
 import { sha256 } from '../../lib/crypto';
@@ -121,10 +119,7 @@ export async function evaluateAll(asOf = yesterday()) {
       };
       const json = canonical(evidence);
       const digest = sha256(json);
-      // shortcut: local folder stands in for the S3 Object Lock bucket; move to S3 in Part 11.1.
-      const file = path.join(dataDir, 'evidence', `${digest}.json`);
-      await fs.mkdir(path.dirname(file), { recursive: true });
-      await fs.writeFile(file, json);
+      // shortcut: the snapshot lives in the TriggerEvent row (hash-checked); move to an S3 Object Lock bucket before launch.
 
       try {
         await prisma.$transaction(async (tx) => {
@@ -138,7 +133,8 @@ export async function evaluateAll(asOf = yesterday()) {
               indexValue: decision.indexValue,
               threshold: decision.threshold,
               payoutAmountPaise: decision.payoutAmountPaise,
-              evidencePath: path.relative(dataDir, file),
+              evidencePath: `db:${digest}`,
+              evidence: JSON.parse(json),
               evidenceSha256: digest,
               engineVersion: ENGINE_VERSION,
               status: 'APPROVED', // fraud pre-check arrives with Phase 6 / FS-1402

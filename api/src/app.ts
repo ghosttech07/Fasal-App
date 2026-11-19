@@ -12,6 +12,7 @@ import { authRouter } from './modules/auth.routes';
 import { farmerRouter } from './modules/farmer.routes';
 import { policyRouter } from './modules/policy.routes';
 import { adminRouter } from './modules/triggers/simulator.routes';
+import { cronRouter } from './modules/cron.routes';
 
 export function createApp() {
   const app = express();
@@ -35,6 +36,7 @@ export function createApp() {
 
   const v1 = express.Router();
   v1.use('/auth', authRouter);
+  v1.use('/cron', cronRouter); // daily rain check on serverless hosts
   v1.use('/admin', adminRouter); // each router applies its own guard, so mount under distinct prefixes
   v1.use('/me', farmerRouter);
   v1.use(policyRouter); // last: its FARMER guard would otherwise shadow later routes

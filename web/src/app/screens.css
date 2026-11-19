@@ -1253,3 +1253,6 @@ a.acc-row {
     animation: none;
   }
 }
+
+/* Hosted demo marker: in the page flow at the very top, so it never covers anything. */
+.demo-strip { padding: calc(env(safe-area-inset-top, 0px) + 4px) 16px 4px; background: #2b2100; color: var(--marigold); font-size: 13px; font-weight: 600; text-align: center; letter-spacing: 0.01em; }

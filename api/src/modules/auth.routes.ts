@@ -35,7 +35,7 @@ authRouter.post('/otp/request', otpLimiter, async (req, res) => {
   res.status(201).json({
     requestId: request.id,
     expiresIn: env.OTP_TTL_SECONDS,
-    ...(env.APP_ENV === 'local' ? { devOtp: otp } : {}),
+    ...(env.APP_ENV === 'local' || env.DEMO_SHOW_OTP ? { devOtp: otp } : {}),
   });
 });
 

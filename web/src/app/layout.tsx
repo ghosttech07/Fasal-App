@@ -43,6 +43,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               "try{if(sessionStorage.getItem('fs_splash'))document.documentElement.dataset.splash='skip'}catch(e){}",
           }}
         />
+        {process.env.NEXT_PUBLIC_DEMO === '1' ? (
+          <div className="demo-strip">Demo · test data only, no real money</div>
+        ) : null}
         <NetStatus />
         <Splash />
         {children}
