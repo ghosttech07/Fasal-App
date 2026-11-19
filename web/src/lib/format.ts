@@ -18,13 +18,6 @@ export function day(iso: string | Date, year = false) {
 
 export const num1 = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
-export const DISTRICTS = [
-  ['LATUR', 'Latur'],
-  ['BEED', 'Beed'],
-  ['DHARASHIV', 'Dharashiv'],
-  ['NANDED', 'Nanded'],
-] as const;
-
 const PHASES: Record<string, string> = {
   P1_SOWING: 'Sowing',
   P2_GROWTH: 'Growth',
@@ -45,6 +38,7 @@ export const todayIso = () => new Date().toISOString().slice(0, 10);
 export type Me = {
   farmerCode: string;
   name: string | null;
+  stateCode: string | null;
   districtCode: string | null;
   village: string | null;
   consents: string[];

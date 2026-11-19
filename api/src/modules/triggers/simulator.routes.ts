@@ -8,6 +8,7 @@ import { requireAdminKey } from '../../lib/auth';
 import { body, HttpError } from '../../lib/http';
 import { daysBetween } from '../../rules/engine';
 import { evaluateAll, ingest, seasonStart } from './service';
+import { findDistrict } from '@fasalshield/shared/geo';
 
 /** Demo tooling (FR-21, brief 5.5). Disabled unless ENABLE_SIMULATOR=true; env schema forbids it in prod. */
 export const adminRouter = Router();
@@ -25,7 +26,7 @@ adminRouter.post('/simulator/scenarios', async (req, res) => {
     req,
     z
       .object({
-        districtCode: z.enum(['LATUR', 'BEED', 'DHARASHIV', 'NANDED']),
+        districtCode: z.string().refine((c) => findDistrict(c) !== null, 'Unknown district'), // e.g. "MH-LATUR"
         from: isoDate,
         to: isoDate,
         pctOfNormal: z.number().min(0).max(1000).optional(),

@@ -19,7 +19,8 @@ const crops = [
   { code: 'GRAM', icon: 'local_florist', namesI18n: { en: 'Gram (Chana)', hi: 'चना', mr: 'हरभरा' } },
 ];
 
-const DISTRICTS = ['LATUR', 'BEED', 'DHARASHIV', 'NANDED'];
+// Covers are offered in four Marathwada districts (state-qualified codes, see @fasalshield/shared/geo).
+const DISTRICTS = ['MH-LATUR', 'MH-BEED', 'MH-DHARASHIV', 'MH-NANDED'];
 
 async function main() {
   const insurer = await prisma.organisation.upsert({

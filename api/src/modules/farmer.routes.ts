@@ -8,6 +8,7 @@ import { requireRole } from '../lib/auth';
 import { decrypt, encrypt, hmac } from '../lib/crypto';
 import { cellFor } from '../lib/grid';
 import { body, HttpError } from '../lib/http';
+import { findDistrict } from '@fasalshield/shared/geo';
 
 /** Farmer self-service (FR-02…FR-07). Every route is scoped to the caller's own records (TH-09). */
 export const farmerRouter = Router();
@@ -28,6 +29,7 @@ async function me(farmerId: string) {
     phone: farmer.phoneE164,
     name: farmer.nameEnc ? decrypt(farmer.nameEnc) : null,
     language: farmer.language,
+    stateCode: farmer.stateCode,
     districtCode: farmer.districtCode,
     village: farmer.village,
     yearOfBirth: farmer.yearOfBirth,
@@ -77,7 +79,8 @@ farmerRouter.patch('/', async (req, res) => {
     z.object({
       name: z.string().trim().min(2).max(80).optional(),
       language: languageCodeSchema.optional(),
-      districtCode: z.enum(['LATUR', 'BEED', 'DHARASHIV', 'NANDED']).optional(),
+      // Any district of India, as a state-qualified code from @fasalshield/shared/geo (e.g. "MH-LATUR").
+      districtCode: z.string().refine((c) => findDistrict(c) !== null, 'Unknown district').optional(),
       village: z.string().trim().min(2).max(80).optional(),
       yearOfBirth: z.number().int().min(1930).max(new Date().getFullYear() - 18).optional(),
       idDoc: z.object({ type: z.enum(['VOTER_ID', 'RATION_CARD', 'PAN', 'AADHAAR']), number: z.string().trim().regex(/^[A-Za-z0-9]{6,20}$/) }).optional(),
@@ -96,6 +99,7 @@ farmerRouter.patch('/', async (req, res) => {
         nameEnc: input.name ? encrypt(input.name) : undefined,
         language: input.language,
         districtCode: input.districtCode,
+        stateCode: input.districtCode ? findDistrict(input.districtCode)!.state.code : undefined,
         village: input.village,
         yearOfBirth: input.yearOfBirth,
         ...(input.idDoc ? { idDocType: input.idDoc.type, idDocLast4: input.idDoc.number.slice(-4), idDocHash, kycStatus: 'BASIC' as const } : {}),

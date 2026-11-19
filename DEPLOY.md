@@ -53,7 +53,7 @@ change `API_URL` (web) and `API_BASE_URL` / `CORS_ORIGINS` (api) to the real add
   ```powershell
   Invoke-RestMethod -Method Post -Uri https://fasal-api.vercel.app/api/v1/admin/simulator/scenarios `
     -Headers @{ 'x-admin-key' = '<ADMIN_API_KEY>' } -ContentType 'application/json' `
-    -Body '{"districtCode":"LATUR","from":"2026-11-01","to":"2026-11-19","pctOfNormal":40}'
+    -Body '{"districtCode":"MH-LATUR","from":"2026-11-01","to":"2026-11-19","pctOfNormal":40}'
   ```
 
 - Every `git push` to `main` redeploys both projects automatically.

@@ -5,29 +5,20 @@ import { useEffect, useRef, useState } from 'react';
 const DROP = 'M12 2.7c3.4 4.4 6.3 8 6.3 11.3a6.3 6.3 0 0 1-12.6 0c0-3.3 2.9-6.9 6.3-11.3z';
 
 /**
- * Opening animation (approved idea A, "sprout in the rain"). Plays once per browser session while the app loads:
- * full on the first ever open, name-only afterwards. Tap skips. At the end the name flies onto the board's mark.
- * The inline script in the layout hides it before paint when this session has already seen it.
+ * Opening animation (approved idea A, "sprout in the rain"). Plays in full every time the app is opened
+ * (link, home screen, new tab). Skipped only when the page load came from inside the app itself (e.g. the
+ * full reload right after sign-in); the inline script in the layout hides it before paint in that case.
+ * Tap skips. At the end the name flies onto the board's mark.
  */
 export function Splash() {
   const ref = useRef<HTMLDivElement>(null);
   const [gone, setGone] = useState(false);
-  const [short, setShort] = useState(false);
   const leaving = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el || getComputedStyle(el).display === 'none') return setGone(true);
-    let seenBefore = false;
-    try {
-      seenBefore = localStorage.getItem('fs_seen') === '1';
-      localStorage.setItem('fs_seen', '1');
-      sessionStorage.setItem('fs_splash', '1');
-    } catch {
-      /* storage blocked: play the full version every time */
-    }
-    setShort(seenBefore);
-    const t = setTimeout(leave, seenBefore ? 650 : 1900);
+    const t = setTimeout(leave, 1900);
     return () => clearTimeout(t);
   }, []);
 
@@ -53,7 +44,7 @@ export function Splash() {
 
   if (gone) return null;
   return (
-    <div ref={ref} className={`splash${short ? ' short' : ''}`} onClick={leave} role="presentation">
+    <div ref={ref} className="splash" onClick={leave} role="presentation">
       <div className="stage">
         <svg className="art" viewBox="0 0 120 120" aria-hidden="true">
           <path

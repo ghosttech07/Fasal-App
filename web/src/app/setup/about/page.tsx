@@ -1,12 +1,22 @@
 'use client';
 
-import { ArrowRight, ChevronDown, LoaderCircle, ShieldCheck } from 'lucide-react';
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  LoaderCircle,
+  LocateFixed,
+  ShieldCheck,
+} from 'lucide-react';
+import { findDistrict } from '@fasalshield/shared/geo';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FormError } from '@/components/form-error';
 import { StepBoard } from '@/components/step-board';
 import { get, messageFor, patch, post } from '@/lib/client';
-import { DISTRICTS, type Me } from '@/lib/format';
+import type { Me } from '@/lib/format';
+import { averagedFix } from '@/lib/gps';
+import { INDIA_STATES, districtCode, placeFromPosition } from '@/lib/place';
 
 const ID_TYPES = [
   ['VOTER_ID', 'Voter ID'],
@@ -19,8 +29,11 @@ export default function AboutPage() {
   const [me, setMe] = useState<Me | null>(null);
   const [agree, setAgree] = useState(false);
   const [name, setName] = useState('');
+  const [stateCode, setStateCode] = useState('');
   const [district, setDistrict] = useState('');
   const [village, setVillage] = useState('');
+  const [locating, setLocating] = useState(false);
+  const [located, setLocated] = useState<string | null>(null);
   const [showId, setShowId] = useState(false);
   const [idType, setIdType] = useState<string>('VOTER_ID');
   const [idNumber, setIdNumber] = useState('');
@@ -33,14 +46,52 @@ export default function AboutPage() {
         setMe(m);
         setAgree(m.onboarding.consent);
         setName(m.name ?? '');
-        setDistrict(m.districtCode ?? '');
+        const found = m.districtCode ? findDistrict(m.districtCode) : null;
+        if (found) {
+          setStateCode(found.state.code);
+          setDistrict(found.district);
+        }
         setVillage(m.village ?? '');
       })
       .catch((e) => setError(messageFor(e)));
   }, []);
 
+  const districts = INDIA_STATES.find((s) => s.code === stateCode)?.districts ?? [];
+
+  async function useLocation() {
+    setLocating(true);
+    setLocated(null);
+    setError(null);
+    try {
+      const fix = await averagedFix(6000);
+      const place = await placeFromPosition(fix.lat, fix.lng);
+      if (place.stateCode) setStateCode(place.stateCode);
+      setDistrict(place.district ?? '');
+      if (place.village) setVillage(place.village);
+      const filled = [
+        place.village,
+        place.district,
+        INDIA_STATES.find((s) => s.code === place.stateCode)?.name,
+      ].filter(Boolean);
+      setLocated(
+        filled.length
+          ? `Found: ${filled.join(', ')}.${place.district ? '' : ' Please choose your district.'}`
+          : 'Could not read your place from the map. Please choose it below.',
+      );
+    } catch (e) {
+      setError(
+        (e as Error).message === 'denied'
+          ? 'Location is switched off for this app. Allow location in your phone settings, or choose your place below.'
+          : 'Could not find your location. Check your signal, or choose your place below.',
+      );
+    } finally {
+      setLocating(false);
+    }
+  }
+
   const idOk = !showId || /^[A-Za-z0-9]{6,20}$/.test(idNumber);
-  const ready = agree && name.trim().length >= 2 && district && village.trim().length >= 2 && idOk;
+  const ready =
+    agree && name.trim().length >= 2 && stateCode && district && village.trim().length >= 2 && idOk;
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +103,7 @@ export default function AboutPage() {
         await post('/api/fs/me/consents', { purposes: ['INSURANCE_SERVICING'], language: 'en' });
       await patch('/api/fs/me', {
         name: name.trim(),
-        districtCode: district,
+        districtCode: districtCode(stateCode, district),
         village: village.trim(),
         ...(showId && idNumber ? { idDoc: { type: idType, number: idNumber.trim() } } : {}),
       });
@@ -101,44 +152,98 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="two">
+          <fieldset className="place">
+            <legend className="h2" style={{ fontSize: 20 }}>
+              Where is your farm
+            </legend>
+            <button
+              className="btn btn-line"
+              type="button"
+              onClick={useLocation}
+              disabled={locating}
+            >
+              {locating ? (
+                <LoaderCircle className="spin" size={22} aria-hidden="true" />
+              ) : (
+                <LocateFixed size={22} aria-hidden="true" />
+              )}
+              {locating ? 'Finding your place' : 'Use my location'}
+            </button>
+            {located ? (
+              <p className="small place-found" role="status">
+                <Check size={16} aria-hidden="true" /> {located}
+              </p>
+            ) : (
+              <p className="small">Or choose it yourself:</p>
+            )}
+
             <div>
-              <label className="label" htmlFor="district">
-                District
+              <label className="label" htmlFor="state">
+                State
               </label>
               <div className="field">
                 <select
-                  id="district"
+                  id="state"
                   className="select"
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
+                  value={stateCode}
+                  onChange={(e) => {
+                    setStateCode(e.target.value);
+                    setDistrict('');
+                  }}
                 >
                   <option value="" disabled>
-                    Choose
+                    Choose your state
                   </option>
-                  {DISTRICTS.map(([code, label]) => (
-                    <option key={code} value={code}>
-                      {label}
+                  {INDIA_STATES.map((s) => (
+                    <option key={s.code} value={s.code}>
+                      {s.name}
                     </option>
                   ))}
                 </select>
                 <ChevronDown size={20} aria-hidden="true" color="var(--ink-2)" />
               </div>
             </div>
+
+            <div>
+              <label className="label" htmlFor="district">
+                District
+              </label>
+              <div className="field" data-disabled={!stateCode}>
+                <select
+                  id="district"
+                  className="select"
+                  value={district}
+                  disabled={!stateCode}
+                  onChange={(e) => setDistrict(e.target.value)}
+                >
+                  <option value="" disabled>
+                    {stateCode ? 'Choose your district' : 'Choose a state first'}
+                  </option>
+                  {districts.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={20} aria-hidden="true" color="var(--ink-2)" />
+              </div>
+            </div>
+
             <div>
               <label className="label" htmlFor="village">
-                Village
+                Village or town
               </label>
               <div className="field text">
                 <input
                   id="village"
                   value={village}
                   maxLength={80}
+                  autoComplete="address-level3"
                   onChange={(e) => setVillage(e.target.value)}
                 />
               </div>
             </div>
-          </div>
+          </fieldset>
 
           {showId ? (
             <div className="two">

@@ -52,15 +52,14 @@ export default function LoginPage() {
 
   return (
     <main className="screen">
-      <section className="board" aria-labelledby="pitch">
+      <section className="board board-signin" aria-labelledby="pitch">
         <Mark />
         <h1 id="pitch" className="board-title">
           Crop cover that pays when the rain fails
         </h1>
-        <p className="board-sub">No claim forms. The money goes to your UPI within a day.</p>
-        <table className="rates">
-          <caption>Dry Spell Cover, sowing phase, for ₹15,000 of cover</caption>
-          <thead>
+        <table className="rates rates-tight">
+          <caption className="sr-only">Dry Spell Cover, sowing phase, for ₹15,000 of cover</caption>
+          <thead className="sr-only">
             <tr>
               <th scope="col">If rain this phase is</th>
               <th scope="col">You get</th>
@@ -110,7 +109,7 @@ export default function LoginPage() {
                 {error}
               </p>
             ) : (
-              <p id="phone-hint" className="hint" style={{ marginTop: 8 }}>
+              <p id="phone-hint" className="sr-only">
                 We send a 6-digit code by SMS. No password needed.
               </p>
             )}

@@ -115,7 +115,8 @@ model Farmer {
   phoneE164          String         @unique
   nameEnc            String? // AES-256-GCM (lib/crypto)
   language           String         @default("en")
-  districtCode       String?
+  stateCode          String? // ISO 3166-2:IN, e.g. "MH"
+  districtCode       String? // "<STATE>-<NAME>", e.g. "MH-LATUR" (see @fasalshield/shared/geo)
   village            String?
   yearOfBirth        Int?
   idDocType          String?

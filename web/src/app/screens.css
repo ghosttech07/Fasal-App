@@ -616,14 +616,6 @@ html[data-splash='skip'] .splash {
   color: #6b756f;
   animation: sp-fade 300ms ease-out 900ms both;
 }
-.splash.short .art,
-.splash.short .leave,
-.splash.short .skip {
-  display: none;
-}
-.splash.short .word {
-  animation-delay: 0ms;
-}
 .splash.out {
   background: rgb(255 255 255 / 0);
   pointer-events: none;
@@ -1255,4 +1247,71 @@ a.acc-row {
 }
 
 /* Hosted demo marker: in the page flow at the very top, so it never covers anything. */
-.demo-strip { padding: calc(env(safe-area-inset-top, 0px) + 4px) 16px 4px; background: #2b2100; color: var(--marigold); font-size: 13px; font-weight: 600; text-align: center; letter-spacing: 0.01em; }
+.demo-strip {
+  padding: calc(env(safe-area-inset-top, 0px) + 4px) 16px 4px;
+  background: #2b2100;
+  color: var(--marigold);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+/* Sign-in board, as in the approved opening-screen hand-off: mark, headline, three posted rates. */
+.board-signin {
+  gap: 10px;
+  padding-bottom: 16px;
+}
+.board-signin .board-title {
+  font-size: clamp(24px, 7vw, 28px);
+  line-height: 1.15;
+}
+.rates-tight td {
+  padding: 9px 0;
+  font-size: 15px;
+  color: var(--chalk-2);
+}
+.rates-tight td.amt {
+  font-size: 22px;
+}
+.rates-tight tbody tr:first-child td {
+  border-top: 0;
+}
+.rates-tight tbody tr:last-child td {
+  border-bottom: 1px solid var(--board-rule);
+}
+
+/* Farm location: GPS shortcut first, then state → district → village, each full width so long names never collide. */
+.place {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+.place legend {
+  padding: 0;
+  margin-bottom: 2px;
+}
+.place-found {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  color: var(--board);
+  font-weight: 500;
+}
+.place-found svg {
+  flex: none;
+  margin-top: 3px;
+}
+.field[data-disabled='true'] {
+  background: #eef0ec;
+}
+.select {
+  text-overflow: ellipsis;
+}
+.select:disabled {
+  color: var(--ink-2);
+  cursor: not-allowed;
+}
