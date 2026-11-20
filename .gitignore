@@ -44,3 +44,7 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 **/.impeccable/hook.cache.json
+
+# Design drafts and the taste-skill working files (the shipped landing page lives in web/public/welcome)
+.taste-skill/
+site/
