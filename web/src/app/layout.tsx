@@ -36,11 +36,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={`${body.variable} ${figures.variable}`} suppressHydrationWarning>
       <body>
-        {/* Before paint: skip the opening animation when this load came from inside the app (e.g. after sign-in). */}
+        {/* Before paint: skip the opening animation when this load came from inside the app (e.g. after sign-in); arriving from the landing page still plays it. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{if(document.referrer&&new URL(document.referrer).origin===location.origin)document.documentElement.dataset.splash='skip'}catch(e){}",
+              "try{var r=document.referrer&&new URL(document.referrer);if(r&&r.origin===location.origin&&r.pathname.indexOf('/welcome')!==0)document.documentElement.dataset.splash='skip'}catch(e){}",
           }}
         />
         {process.env.NEXT_PUBLIC_DEMO === '1' ? (

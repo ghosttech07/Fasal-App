@@ -7,7 +7,7 @@ import {
   setTokenCookies,
 } from '@/lib/session';
 
-const PUBLIC = ['/login', '/otp'];
+const PUBLIC = ['/login', '/otp', '/start'];
 
 /**
  * Route guard: signed-out visitors opening the home page see the public landing page (/welcome) first,
@@ -17,6 +17,11 @@ export async function middleware(req: NextRequest) {
   const isPublic = PUBLIC.includes(req.nextUrl.pathname);
   const access = req.cookies.get(ACCESS_COOKIE)?.value;
   const refresh = req.cookies.get(REFRESH_COOKIE)?.value;
+
+  // Opening the website (typed address, bookmark, shared link) always shows the landing page first,
+  // signed in or not. Moves inside the app carry a same-site Referer and go straight to the app home.
+  if (req.nextUrl.pathname === '/' && !cameFromSite(req))
+    return NextResponse.redirect(new URL('/welcome', req.url));
 
   if (isPublic)
     return access || refresh ? NextResponse.redirect(new URL('/', req.url)) : NextResponse.next();
@@ -34,6 +39,16 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next({ request: { headers: req.headers } });
   setTokenCookies(res, tokens);
   return res;
+}
+
+function cameFromSite(req: NextRequest): boolean {
+  const ref = req.headers.get('referer');
+  if (!ref) return false;
+  try {
+    return new URL(ref).origin === req.nextUrl.origin;
+  } catch {
+    return false;
+  }
 }
 
 export const config = {
