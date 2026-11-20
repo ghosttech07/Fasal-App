@@ -9,7 +9,10 @@ import {
 
 const PUBLIC = ['/login', '/otp'];
 
-/** Route guard: signed-out visitors go to /login; an expired access cookie is renewed before the page renders. */
+/**
+ * Route guard: signed-out visitors opening the home page see the public landing page (/welcome) first,
+ * any other private page sends them to /login; an expired access cookie is renewed before the page renders.
+ */
 export async function middleware(req: NextRequest) {
   const isPublic = PUBLIC.includes(req.nextUrl.pathname);
   const access = req.cookies.get(ACCESS_COOKIE)?.value;
@@ -21,7 +24,8 @@ export async function middleware(req: NextRequest) {
 
   const tokens = refresh ? await refreshTokens(refresh) : null;
   if (!tokens) {
-    const res = NextResponse.redirect(new URL('/login', req.url));
+    const to = req.nextUrl.pathname === '/' ? '/welcome' : '/login';
+    const res = NextResponse.redirect(new URL(to, req.url));
     if (refresh) clearTokenCookies(res);
     return res;
   }
@@ -33,5 +37,6 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api/|_next/|favicon.ico|icon|manifest).*)'],
+  // welcome/ is the static public landing page and its media: no session needed.
+  matcher: ['/((?!api/|_next/|welcome|favicon.ico|icon|manifest).*)'],
 };
