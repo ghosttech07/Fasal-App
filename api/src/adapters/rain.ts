@@ -1,4 +1,4 @@
-import { fromUrl } from 'geotiff';
+import type * as GeoTiff from 'geotiff';
 import { logger } from '../lib/logger';
 
 /**
@@ -8,6 +8,10 @@ import { logger } from '../lib/logger';
  *  - NASA POWER daily (PRECTOTCORR): ~0.5° grid, 2-3 days behind. Fills the weeks CHIRPS has not published yet.
  * CHIRPS rows carry a higher sourceVersion, so once a day is published it replaces the NASA value for triggers.
  */
+// geotiff is ESM-only and the Vercel build emits CommonJS, where a static import crashes the whole API at start.
+// A native import() (hidden from the TS rewrite to require) loads it only when the rain job runs.
+const loadGeoTiff = new Function('m', 'return import(m)') as (m: string) => Promise<typeof GeoTiff>;
+
 export const CHIRPS = { code: 'CHIRPS_V3', version: 2 } as const;
 export const POWER = { code: 'NASA_POWER', version: 1 } as const;
 
@@ -26,6 +30,7 @@ export async function chirpsDay(date: string, cells: CellRef[]): Promise<RainRow
   const head = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(10_000) });
   if (head.status === 404) return null;
   if (!head.ok) throw new Error(`CHIRPS ${date}: HTTP ${head.status}`);
+  const { fromUrl } = await loadGeoTiff('geotiff');
   const img = await (await fromUrl(url)).getImage();
   const [ox, oy] = img.getOrigin() as [number, number];
   const [rx, ry] = img.getResolution() as [number, number];
