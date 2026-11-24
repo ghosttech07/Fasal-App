@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useT } from '@/i18n/client';
 
 const DROP = 'M12 2.7c3.4 4.4 6.3 8 6.3 11.3a6.3 6.3 0 0 1-12.6 0c0-3.3 2.9-6.9 6.3-11.3z';
 
@@ -11,6 +12,7 @@ const DROP = 'M12 2.7c3.4 4.4 6.3 8 6.3 11.3a6.3 6.3 0 0 1-12.6 0c0-3.3 2.9-6.9 
  * Tap skips. At the end the name flies onto the board's mark.
  */
 export function Splash() {
+  const { t } = useT();
   const ref = useRef<HTMLDivElement>(null);
   const [gone, setGone] = useState(false);
   const leaving = useRef(false);
@@ -132,7 +134,7 @@ export function Splash() {
           </div>
         </div>
         <div className="leave">
-          <div className="tagline">Crop cover that pays when the rain fails</div>
+          <div className="tagline">{t('c.tagline')}</div>
         </div>
       </div>
       <div className="skip">Tap to skip</div>

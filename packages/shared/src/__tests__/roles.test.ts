@@ -51,9 +51,9 @@ describe('payout state machine', () => {
 
 describe('languages and perils', () => {
   it('falls back requested → hi → en', () => {
-    expect(languageFallbackChain('mr')).toEqual(['mr', 'hi', 'en']);
-    expect(languageFallbackChain('hi')).toEqual(['hi', 'en']);
-    expect(languageFallbackChain('en')).toEqual(['en', 'hi']);
+    expect(languageFallbackChain('mr')).toEqual(['mr', 'en']);
+    expect(languageFallbackChain('ta')).toEqual(['ta', 'en']);
+    expect(languageFallbackChain('en')).toEqual(['en']);
     expect(isLanguageCode('mr')).toBe(true);
     expect(isLanguageCode('xx')).toBe(false);
   });

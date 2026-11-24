@@ -6,6 +6,9 @@ import 'leaflet/dist/leaflet.css';
 import { Splash } from '@/components/splash';
 import { NetStatus } from '@/components/net-status';
 import { RegisterSW } from '@/components/register-sw';
+import { cookies } from 'next/headers';
+import { asLang, dictFor, LANG_COOKIE } from '@/i18n';
+import { LangProvider } from '@/i18n/client';
 
 // Self-hosted at build time by next/font: no third-party font request on the farmer's data plan.
 const body = Barlow({
@@ -35,9 +38,11 @@ export const viewport: Viewport = {
   themeColor: '#123F2C',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const raw = (await cookies()).get(LANG_COOKIE)?.value;
+  const lang = asLang(raw);
   return (
-    <html lang="en" className={`${body.variable} ${figures.variable}`} suppressHydrationWarning>
+    <html lang={lang} className={`${body.variable} ${figures.variable}`} suppressHydrationWarning>
       <body>
         {/* Before paint: skip the opening animation when this load came from inside the app (e.g. after sign-in); arriving from the landing page still plays it. */}
         <script
@@ -49,10 +54,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {process.env.NEXT_PUBLIC_DEMO === '1' ? (
           <div className="demo-strip">Demo · test data only, no real money</div>
         ) : null}
-        <NetStatus />
-        <RegisterSW />
-        <Splash />
-        {children}
+        <LangProvider value={{ lang, dict: dictFor(lang), chosen: !!raw }}>
+          <NetStatus />
+          <RegisterSW />
+          <Splash />
+          {children}
+        </LangProvider>
       </body>
     </html>
   );

@@ -5,47 +5,39 @@ import { ArrowRight, Bell, Check, ChevronLeft, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Mark } from '@/components/mark';
+import { LANG_LIST, type Key } from '@/i18n';
+import { useT } from '@/i18n/client';
 
 /** Saved on this phone once the farmer agrees, so the story is not shown again. */
 const DONE_KEY = 'fs_onboarded';
 
-const STORY = [
-  {
-    title: 'Cover that pays when the rain fails',
-    body: 'Before you buy, you see exactly how much rain pays how much money. No claim forms, ever.',
-  },
-  {
-    title: 'A satellite watches your field',
-    body: 'Every day it measures the rain on your field. When rain falls below a mark, that mark is passed.',
-  },
-  {
-    title: 'Money comes to your UPI by itself',
-    body: 'When a mark is passed, the money reaches your UPI within a day, with an SMS. You do nothing.',
-  },
+const STORY: [Key, Key][] = [
+  ['start.s1.title', 'start.s1.body'],
+  ['start.s2.title', 'start.s2.body'],
+  ['start.s3.title', 'start.s3.body'],
 ];
 
 // shortcut: mirrors the seeded Dry Spell Cover (FS-DRT-MH-RB, 2 acres, sowing phase), like the sign-in board; serve from a public catalog before launch.
 const RATES = [
-  { rain: 'Rain 40% below normal', amount: '₹1,500', at: 40 },
-  { rain: 'Rain 60% below normal', amount: '₹3,600', at: 60 },
-  { rain: 'Rain 80% below normal', amount: '₹6,000', at: 80 },
+  { pct: 40, amount: '₹1,500' },
+  { pct: 60, amount: '₹3,600' },
+  { pct: 80, amount: '₹6,000' },
 ];
 
-const TERMS = [
-  [
-    'Payouts follow measured rain.',
-    'A satellite measures rain for your area. Your own field can get a little more or less.',
-  ],
-  ['Your premium goes to the insurer,', 'not to this app. In a normal year nothing is paid out.'],
-  ['We check who you are.', 'Your UPI name, and an ID before large payouts.'],
-  ['Your data stays private.', 'Only your insurer sees it. You can ask us to delete it.'],
+const TERMS: [Key, Key][] = [
+  ['bys.t1b', 'bys.t1'],
+  ['bys.t2b', 'bys.t2'],
+  ['bys.t3b', 'bys.t3'],
+  ['bys.t4b', 'bys.t4'],
 ];
 
 type Perm = 'idle' | 'allowed' | 'blocked';
 
 export default function StartPage() {
   const router = useRouter();
-  const [step, setStep] = useState(0); // 0-2 story, 3 "Before you start"
+  const { t, lang, chosen, setLang } = useT();
+  // -1 language, 0-2 story, 3 "Before you start". The language step shows until this phone has chosen one.
+  const [step, setStep] = useState(chosen ? 0 : -1);
   const [agreed, setAgreed] = useState(false);
   const [notif, setNotif] = useState<Perm>('idle');
   const [loc, setLoc] = useState<Perm>('idle');
@@ -80,11 +72,49 @@ export default function StartPage() {
   function finish() {
     try {
       // shortcut: consent is recorded on this phone only; store it with the farmer's account (version + time) once the API has a consent endpoint.
-      localStorage.setItem(DONE_KEY, JSON.stringify({ terms: 'v1', at: new Date().toISOString() }));
+      localStorage.setItem(
+        DONE_KEY,
+        JSON.stringify({ terms: 'v1', lang, at: new Date().toISOString() }),
+      );
     } catch {
       /* still continue to sign-in */
     }
     router.push('/login');
+  }
+
+  if (step === -1) {
+    return (
+      <main className="screen">
+        <section className="board" aria-labelledby="lang-h">
+          <Mark />
+          <h1 id="lang-h" className="board-title">
+            {t('lang.title')}
+          </h1>
+          <p className="board-sub">{t('lang.sub')}</p>
+        </section>
+        <div className="work">
+          <div className="lang-grid" role="list">
+            {LANG_LIST.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                role="listitem"
+                lang={l.code}
+                className="lang-btn"
+                data-on={l.code === lang}
+                onClick={() => {
+                  setLang(l.code);
+                  setStep(0);
+                }}
+              >
+                <b>{l.nativeName}</b>
+                {l.code !== 'en' ? <small>{l.englishName}</small> : null}
+              </button>
+            ))}
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (step === 3) {
@@ -93,12 +123,12 @@ export default function StartPage() {
         <section className="board" aria-labelledby="bys">
           <button type="button" className="back ob-back" onClick={back}>
             <ChevronLeft size={20} aria-hidden="true" />
-            Back
+            {t('c.back')}
           </button>
           <h1 id="bys" className="board-title">
-            Before you start
+            {t('bys.title')}
           </h1>
-          <p className="board-sub">Four things to know, in plain words</p>
+          <p className="board-sub">{t('bys.sub')}</p>
         </section>
 
         <div className="work">
@@ -106,44 +136,44 @@ export default function StartPage() {
             {TERMS.map(([b, rest]) => (
               <li key={b}>
                 <span>
-                  <b>{b}</b> {rest}
+                  <b>{t(b)}</b> {t(rest)}
                 </span>
               </li>
             ))}
           </ol>
           <p className="hint">
-            Full text: <Link href="/legal/terms">Terms of use</Link> ·{' '}
-            <Link href="/legal/privacy">Privacy</Link> ·{' '}
-            <Link href="/legal/grievance">Complaints</Link>
+            {t('bys.full')} <Link href="/legal/terms">{t('bys.terms')}</Link> ·{' '}
+            <Link href="/legal/privacy">{t('bys.privacy')}</Link> ·{' '}
+            <Link href="/legal/grievance">{t('bys.complaints')}</Link>
           </p>
 
           <div className="ob-perms">
-            <h2 className="ob-perms-h">Allow on this phone</h2>
+            <h2 className="ob-perms-h">{t('bys.allow')}</h2>
             <PermRow
               icon={<Bell size={22} aria-hidden="true" />}
-              title="Notifications"
-              sub="When money is sent or rain nears a mark"
+              title={t('bys.notif')}
+              sub={t('bys.notifSub')}
               state={notif}
               onAllow={askNotif}
             />
             <PermRow
               icon={<MapPin size={22} aria-hidden="true" />}
-              title="Location"
-              sub="To mark your field on the map"
+              title={t('bys.loc')}
+              sub={t('bys.locSub')}
               state={loc}
               onAllow={askLoc}
             />
-            <p className="hint">You can skip these and allow them later.</p>
+            <p className="hint">{t('bys.later')}</p>
           </div>
         </div>
 
         <div className="action">
           <label className="ob-agree">
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-            I have read this and I agree
+            {t('bys.agree')}
           </label>
           <button className="btn" type="button" disabled={!agreed} onClick={finish}>
-            Agree and continue
+            {t('bys.continue')}
             <ArrowRight size={22} aria-hidden="true" />
           </button>
         </div>
@@ -151,6 +181,7 @@ export default function StartPage() {
     );
   }
 
+  const [title, body] = STORY[step]!;
   return (
     <main
       className="screen"
@@ -167,17 +198,17 @@ export default function StartPage() {
         <div className="ob-top">
           <Mark />
           <button type="button" className="ob-skip" onClick={() => setStep(3)}>
-            Skip
+            {t('c.skip')}
           </button>
         </div>
 
         <div className="ob-art" key={step} aria-hidden="true">
           {step === 0 ? (
             <div className="ob-rates">
-              <p className="ob-cap">Dry Spell Cover, sowing phase, 2 acres</p>
+              <p className="ob-cap">{t('start.cap')}</p>
               {RATES.map((r) => (
-                <div className="ob-rate" key={r.rain}>
-                  <span>{r.rain}</span>
+                <div className="ob-rate" key={r.pct}>
+                  <span>{t('start.rate', { pct: r.pct })}</span>
                   <b className="fig">{r.amount}</b>
                 </div>
               ))}
@@ -185,15 +216,15 @@ export default function StartPage() {
           ) : step === 1 ? (
             <div className="ob-meter">
               <p>
-                <b className="fig ob-pct">64%</b> less rain than normal
+                <b className="fig ob-pct">64%</b> {t('start.less')}
               </p>
               <div className="ob-bar">
                 <i style={{ width: '64%' }} />
                 {RATES.map((r) => (
                   <span
-                    key={r.at}
-                    className={r.at > 64 ? 'ahead' : ''}
-                    style={{ left: `${r.at}%` }}
+                    key={r.pct}
+                    className={r.pct > 64 ? 'ahead' : ''}
+                    style={{ left: `${r.pct}%` }}
                   >
                     <em className="fig">{r.amount}</em>
                   </span>
@@ -204,35 +235,35 @@ export default function StartPage() {
             <div className="ob-paid">
               <span className="ob-stamp">
                 <Check size={20} strokeWidth={2.6} aria-hidden="true" />
-                PAID
+                {t('start.paid')}
               </span>
               <b className="fig">₹3,600</b>
-              <p>Sent to your UPI within a day, with an SMS</p>
+              <p>{t('start.paidSub')}</p>
             </div>
           )}
         </div>
       </section>
 
       <div className="work ob-work">
-        <div className="ob-dots" role="img" aria-label={`Step ${step + 1} of 3`}>
+        <div className="ob-dots" role="img" aria-label={t('start.step', { n: step + 1 })}>
           {[0, 1, 2].map((i) => (
             <span key={i} className={i === step ? 'on' : ''} />
           ))}
         </div>
         <div key={step} className="ob-copy" aria-live="polite">
-          <h1 className="h1">{STORY[step].title}</h1>
-          <p className="lead">{STORY[step].body}</p>
+          <h1 className="h1">{t(title)}</h1>
+          <p className="lead">{t(body)}</p>
         </div>
       </div>
 
       <div className="action ob-nav">
         {step > 0 ? (
           <button type="button" className="btn btn-line ob-prev" onClick={back}>
-            Back
+            {t('c.back')}
           </button>
         ) : null}
         <button type="button" className="btn" onClick={next}>
-          {step === 2 ? 'Get started' : 'Next'}
+          {step === 2 ? t('start.getStarted') : t('c.next')}
           <ArrowRight size={22} aria-hidden="true" />
         </button>
       </div>
@@ -247,24 +278,29 @@ function PermRow(props: {
   state: Perm;
   onAllow: () => void;
 }) {
+  const { t } = useT();
   const { icon, title, sub, state, onAllow } = props;
+  const label =
+    state === 'allowed'
+      ? t('bys.allowed')
+      : state === 'blocked'
+        ? t('bys.offBtn')
+        : t('bys.allowBtn');
   return (
     <div className="ob-perm">
       {icon}
       <div className="ob-perm-t">
         <div>{title}</div>
-        <small>
-          {state === 'blocked' ? 'Turned off. You can change this in your phone settings.' : sub}
-        </small>
+        <small>{state === 'blocked' ? t('bys.off') : sub}</small>
       </div>
       <button
         type="button"
         className={'ob-pill' + (state === 'allowed' ? ' on' : '')}
         onClick={onAllow}
         disabled={state !== 'idle'}
-        aria-label={`${state === 'allowed' ? 'Allowed' : state === 'blocked' ? 'Not allowed' : 'Allow'}: ${title}`}
+        aria-label={`${label}: ${title}`}
       >
-        {state === 'allowed' ? 'Allowed' : state === 'blocked' ? 'Off' : 'Allow'}
+        {label}
       </button>
     </div>
   );

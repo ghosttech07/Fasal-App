@@ -5,18 +5,20 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Mark } from '@/components/mark';
 import { handoff, messageFor, post } from '@/lib/client';
+import { useT } from '@/i18n/client';
 
 // shortcut: mirrors the seeded Dry Spell Cover (FS-DRT-MH-RB, ₹15,000, sowing phase); serve it from a public catalog endpoint before launch.
 const POSTED_RATES = [
-  { rain: '40% below normal', amount: '₹1,500' },
-  { rain: '60% below normal', amount: '₹3,600' },
-  { rain: '80% below normal', amount: '₹6,000' },
+  { pct: 40, amount: '₹1,500' },
+  { pct: 60, amount: '₹3,600' },
+  { pct: 80, amount: '₹6,000' },
 ];
 
 const VALID = /^[6-9]\d{9}$/;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useT();
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export default function LoginPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid) {
-      setError('Enter a 10-digit mobile number starting with 6, 7, 8 or 9.');
+      setError(t('login.invalid'));
       return;
     }
     setBusy(true);
@@ -55,7 +57,7 @@ export default function LoginPage() {
       <section className="board board-signin" aria-labelledby="pitch">
         <Mark />
         <h1 id="pitch" className="board-title">
-          Crop cover that pays when the rain fails
+          {t('c.tagline')}
         </h1>
         <table className="rates rates-tight">
           <caption className="sr-only">Dry Spell Cover, sowing phase, for ₹15,000 of cover</caption>
@@ -67,8 +69,8 @@ export default function LoginPage() {
           </thead>
           <tbody>
             {POSTED_RATES.map((r) => (
-              <tr key={r.rain}>
-                <td>{r.rain}</td>
+              <tr key={r.pct}>
+                <td>{t('login.belowNormal', { pct: r.pct })}</td>
                 <td className="amt">{r.amount}</td>
               </tr>
             ))}
@@ -80,7 +82,7 @@ export default function LoginPage() {
         <div className="work">
           <div>
             <label className="label" htmlFor="phone">
-              Your mobile number
+              {t('login.phone')}
             </label>
             <div className="field" data-invalid={!!error}>
               <span className="prefix" aria-hidden="true">
@@ -92,7 +94,7 @@ export default function LoginPage() {
                 type="tel"
                 inputMode="numeric"
                 autoComplete="tel-national"
-                placeholder="10 digits"
+                placeholder={t('login.digits')}
                 maxLength={10}
                 value={phone}
                 aria-invalid={!!error}
@@ -110,7 +112,7 @@ export default function LoginPage() {
               </p>
             ) : (
               <p id="phone-hint" className="sr-only">
-                We send a 6-digit code by SMS. No password needed.
+                {t('login.hint')}
               </p>
             )}
           </div>
@@ -119,7 +121,7 @@ export default function LoginPage() {
         <div className="action">
           <button className="btn" type="submit" disabled={busy || !valid}>
             {busy ? <LoaderCircle className="spin" size={22} aria-hidden="true" /> : null}
-            {busy ? 'Sending code' : 'Send code'}
+            {busy ? t('login.sending') : t('login.send')}
             {busy ? null : <ArrowRight size={22} aria-hidden="true" />}
           </button>
         </div>

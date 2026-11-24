@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Mark } from '@/components/mark';
 import { formatPhone, handoff, messageFor, post } from '@/lib/client';
+import { useT } from '@/i18n/client';
 
 type Pending = { phone: string; requestId: string; devOtp: string | null; sentAt: number };
 const RESEND_AFTER = 30;
 
 export default function OtpPage() {
   const router = useRouter();
+  const { t } = useT();
   const [pending, setPending] = useState<Pending | null>(null);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -77,10 +79,10 @@ export default function OtpPage() {
       <section className="board" aria-labelledby="title">
         <Mark />
         <h1 id="title" className="board-title">
-          Enter the 6-digit code
+          {t('otp.title')}
         </h1>
         <p className="board-sub">
-          Sent by SMS to{' '}
+          {t('otp.sentTo')}{' '}
           <span className="fig" style={{ color: 'var(--chalk)', fontSize: 19 }}>
             {formatPhone(pending.phone)}
           </span>
@@ -98,7 +100,7 @@ export default function OtpPage() {
         <div className="work">
           <div>
             <label className="label" htmlFor="otp">
-              Code from the SMS
+              {t('otp.label')}
             </label>
             <div className="field" data-invalid={!!error}>
               <input
@@ -109,7 +111,7 @@ export default function OtpPage() {
                 autoComplete="one-time-code"
                 autoFocus
                 maxLength={6}
-                placeholder="6 digits"
+                placeholder={t('otp.digits')}
                 value={code}
                 aria-invalid={!!error}
                 aria-describedby={error ? 'otp-error' : undefined}
@@ -133,7 +135,7 @@ export default function OtpPage() {
           {pending.devOtp ? (
             <p>
               <span className="tag tag-dev">
-                Test code{' '}
+                {t('otp.test')}{' '}
                 <span className="fig" style={{ fontSize: 17, letterSpacing: '0.08em' }}>
                   {pending.devOtp}
                 </span>
@@ -153,10 +155,10 @@ export default function OtpPage() {
             >
               {wait > 0 ? (
                 <>
-                  Send again in <span className="fig">{wait}s</span>
+                  {t('otp.againIn')} <span className="fig">{wait}s</span>
                 </>
               ) : (
-                'Send the code again'
+                t('otp.again')
               )}
             </button>
             <button
@@ -165,7 +167,7 @@ export default function OtpPage() {
               style={{ width: 'auto' }}
               onClick={() => router.replace('/login')}
             >
-              Change number
+              {t('otp.change')}
             </button>
           </div>
         </div>
@@ -173,7 +175,7 @@ export default function OtpPage() {
         <div className="action">
           <button className="btn" type="submit" disabled={busy || code.length !== 6}>
             {busy ? <LoaderCircle className="spin" size={22} aria-hidden="true" /> : null}
-            {busy ? 'Checking' : 'Verify and continue'}
+            {busy ? t('otp.checking') : t('otp.verify')}
           </button>
         </div>
       </form>
