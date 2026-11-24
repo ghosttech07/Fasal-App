@@ -76,10 +76,10 @@ enum PayoutStatus {
 }
 
 model Organisation {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   type        String // INSURER | FPO | REINSURER | REGULATOR | PLATFORM
   name        String
-  countryCode String   @default("IN")
+  countryCode String    @default("IN")
   users       User[]
   agents      Agent[]
   products    Product[]
@@ -87,15 +87,26 @@ model Organisation {
 
 /// Staff accounts (admin dashboard). Called "Admin" in the build brief.
 model User {
-  id          String       @id @default(uuid())
-  orgId       String
-  org         Organisation @relation(fields: [orgId], references: [id])
-  email       String       @unique
-  passwordHash String?
-  totpSecretEnc String?
-  role        Role
-  status      String       @default("ACTIVE")
-  createdAt   DateTime     @default(now())
+  id                 String       @id @default(uuid())
+  orgId              String
+  org                Organisation @relation(fields: [orgId], references: [id])
+  email              String       @unique
+  name               String?
+  passwordHash       String?
+  totpSecretEnc      String?
+  /// Last accepted TOTP time step: a code is never accepted twice (replay guard).
+  totpLastStep       Int?
+  mfaEnrolledAt      DateTime?
+  failedLogins       Int          @default(0)
+  lockedUntil        DateTime?
+  lastLoginAt        DateTime?
+  /// True while the person still has a one-time password from an admin; they must choose their own.
+  mustChangePassword Boolean      @default(false)
+  /// Owner-approved quick login: password only, no email or authenticator (single main admin, demo phase).
+  passwordOnly       Boolean      @default(false)
+  role               Role
+  status             String       @default("ACTIVE")
+  createdAt          DateTime     @default(now())
 }
 
 model Agent {
@@ -146,13 +157,13 @@ model Consent {
 }
 
 model OtpRequest {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   phoneE164 String
   otpHash   String
-  attempts  Int      @default(0)
+  attempts  Int       @default(0)
   usedAt    DateTime?
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([phoneE164, createdAt])
 }
@@ -217,9 +228,9 @@ model Plot {
 }
 
 model Crop {
-  code     String @id
+  code      String @id
   namesI18n Json
-  icon     String
+  icon      String
 }
 
 model Season {
@@ -230,33 +241,37 @@ model Season {
 }
 
 model Product {
-  id         String           @id @default(uuid())
+  id           String           @id @default(uuid())
   insurerOrgId String
-  insurer    Organisation     @relation(fields: [insurerOrgId], references: [id])
-  code       String           @unique
-  namesI18n  Json
-  peril      String // DROUGHT | FLOOD
-  status     String           @default("ACTIVE")
-  versions   ProductVersion[]
+  insurer      Organisation     @relation(fields: [insurerOrgId], references: [id])
+  code         String           @unique
+  namesI18n    Json
+  peril        String // DROUGHT | FLOOD
+  status       String           @default("ACTIVE")
+  versions     ProductVersion[]
 }
 
 model ProductVersion {
-  id                String    @id @default(uuid())
+  id                String         @id @default(uuid())
   productId         String
-  product           Product   @relation(fields: [productId], references: [id])
+  product           Product        @relation(fields: [productId], references: [id])
   version           Int
-  status            String    @default("DRAFT") // DRAFT | PENDING_APPROVAL | PUBLISHED | RETIRED
+  status            String         @default("DRAFT") // DRAFT | PENDING_APPROVAL | PUBLISHED | RETIRED
   rules             Json
   rulesSha256       String?
   premiumRateBp     Int
-  subsidyBp         Int       @default(0) // share of premium paid by sponsor
+  subsidyBp         Int            @default(0) // share of premium paid by sponsor
   sumInsuredPaise   Int // cover per acre; a policy covers this × the plot area
   seasonCode        String
   eligibleDistricts String[]
   eligibleCrops     String[]
-  enrolmentCutoff   DateTime  @db.Date
-  waitingPeriodDays Int       @default(7)
+  enrolmentCutoff   DateTime       @db.Date
+  waitingPeriodDays Int            @default(7)
   publishedAt       DateTime?
+  submittedById     String?
+  approvedById      String?
+  reviewNote        String?
+  createdAt         DateTime       @default(now())
   policies          Policy[]
   triggerEvents     TriggerEvent[]
 
@@ -264,23 +279,23 @@ model ProductVersion {
 }
 
 model Policy {
-  id               String          @id @default(uuid())
-  policyNumber     String?         @unique
+  id               String           @id @default(uuid())
+  policyNumber     String?          @unique
   farmerId         String
-  farmer           Farmer          @relation(fields: [farmerId], references: [id])
+  farmer           Farmer           @relation(fields: [farmerId], references: [id])
   plotId           String
-  plot             Plot            @relation(fields: [plotId], references: [id])
+  plot             Plot             @relation(fields: [plotId], references: [id])
   productVersionId String
-  productVersion   ProductVersion  @relation(fields: [productVersionId], references: [id])
+  productVersion   ProductVersion   @relation(fields: [productVersionId], references: [id])
   cropCode         String
   sumInsuredPaise  Int
   premiumPaise     Int
   subsidyPaise     Int
-  paidOutPaise     Int             @default(0)
-  status           PolicyStatus    @default(PENDING_PAYMENT)
-  coverStart       DateTime?       @db.Date
-  coverEnd         DateTime?       @db.Date
-  createdAt        DateTime        @default(now())
+  paidOutPaise     Int              @default(0)
+  status           PolicyStatus     @default(PENDING_PAYMENT)
+  coverStart       DateTime?        @db.Date
+  coverEnd         DateTime?        @db.Date
+  createdAt        DateTime         @default(now())
   payments         PremiumPayment[]
   triggerEvents    TriggerEvent[]
 }
@@ -359,20 +374,40 @@ model Payout {
   utr            String?
   slaDueAt       DateTime
   creditedAt     DateTime?
+  failureReason  String?
+  batchId        String?
+  batch          PayoutBatch? @relation(fields: [batchId], references: [id])
   createdAt      DateTime     @default(now())
+
+  @@index([status])
+}
+
+/// Maker-checker payout approval (FR-27/28): one staff member submits, a different one approves with a fresh code.
+model PayoutBatch {
+  id            String    @id @default(uuid())
+  code          String    @unique
+  status        String    @default("SUBMITTED") // SUBMITTED | APPROVED | REJECTED | SENT
+  count         Int
+  totalPaise    Int
+  submittedById String
+  submittedAt   DateTime  @default(now())
+  approvedById  String?
+  approvedAt    DateTime?
+  note          String?
+  payouts       Payout[]
 }
 
 model Notification {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   farmerId     String
-  farmer       Farmer   @relation(fields: [farmerId], references: [id])
+  farmer       Farmer    @relation(fields: [farmerId], references: [id])
   templateCode String
   channel      String // SMS | WHATSAPP | PUSH | IN_APP
   language     String
   body         String
-  status       String   @default("SENT")
+  status       String    @default("SENT")
   readAt       DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   @@index([farmerId, createdAt])
 }

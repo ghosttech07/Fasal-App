@@ -97,8 +97,6 @@ const baseSchema = z.object({
   KYC_API_KEY: z.string().optional(),
   NASA_EARTHDATA_TOKEN: z.string().optional(),
 
-  // shortcut: static key guards admin/demo endpoints until staff JWT + MFA lands (Part 9.1).
-  ADMIN_API_KEY: z.string().min(32, 'ADMIN_API_KEY must be at least 32 characters').optional(),
   DATA_DIR: z.string().min(1).default('.data'),
 
   PAYOUT_AUTO_APPROVE_BATCH_LIMIT_PAISE: positiveInt.default(50_000_000),

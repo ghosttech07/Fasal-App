@@ -12,7 +12,8 @@
     "build": "prisma generate",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "staff:create": "tsx scripts/create-staff.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -16,6 +16,8 @@ export interface PaymentProvider {
   verifyVpa(vpa: string): Promise<{ valid: boolean; registeredName?: string }>;
   /** Collects premium. Mock succeeds instantly; real gateways return a pending intent + webhook. */
   collectPremium(input: { amountPaise: number; reference: string }): Promise<{ status: 'SUCCESS' | 'FAILED'; gatewayRef: string }>;
+  /** Sends a payout to a UPI ID. idempotencyKey makes a retry of the same payout a no-op at the gateway (NFR-16). */
+  sendPayout(input: { amountPaise: number; vpa: string; idempotencyKey: string }): Promise<{ status: 'SUCCESS' | 'FAILED'; utr?: string; reason?: string }>;
 }
 
 export interface WeatherProvider {
@@ -42,6 +44,11 @@ const mockPayments: PaymentProvider = {
   },
   async collectPremium({ reference }) {
     return { status: 'SUCCESS', gatewayRef: `MOCKPAY-${reference.slice(0, 8)}-${randomToken().slice(0, 6)}` };
+  },
+  async sendPayout({ vpa, idempotencyKey }) {
+    // Mock rule mirrors verifyVpa: handles starting with "fail" bounce; everything else is credited.
+    if (vpa.startsWith('fail')) return { status: 'FAILED', reason: 'vpa_invalid' };
+    return { status: 'SUCCESS', utr: `MOCKUTR${hmac(idempotencyKey, 'utr').slice(0, 12).toUpperCase()}` };
   },
 };
 

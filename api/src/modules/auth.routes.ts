@@ -8,7 +8,7 @@ import { prisma } from '../db';
 import { env } from '../env';
 import { sms } from '../adapters';
 import { audit } from '../lib/audit';
-import { signAccessToken } from '../lib/auth';
+import { isStaffRole, signAccessToken } from '../lib/auth';
 import { hmac, randomToken, sha256 } from '../lib/crypto';
 import { body, HttpError } from '../lib/http';
 
@@ -92,6 +92,7 @@ authRouter.post('/refresh', async (req, res) => {
   const { refreshToken } = body(req, z.object({ refreshToken: z.string().min(20) }));
   const stored = await prisma.refreshToken.findUnique({ where: { tokenHash: sha256(refreshToken) } });
   if (!stored || stored.expiresAt < new Date()) throw new HttpError(401, 'refresh_invalid');
+  if (isStaffRole(stored.role)) throw new HttpError(401, 'refresh_invalid'); // staff renew via /staff/refresh (hard session cap)
   if (stored.revokedAt) {
     await prisma.refreshToken.updateMany({ where: { familyId: stored.familyId }, data: { revokedAt: new Date() } });
     throw new HttpError(401, 'refresh_reused');

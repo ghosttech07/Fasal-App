@@ -4,7 +4,7 @@ import { prisma } from '../../db';
 import { env } from '../../env';
 import { weather } from '../../adapters';
 import { audit, verifyAuditChain } from '../../lib/audit';
-import { requireAdminKey } from '../../lib/auth';
+import { requireStaff } from '../../lib/auth';
 import { body, HttpError } from '../../lib/http';
 import { daysBetween } from '../../rules/engine';
 import { evaluateAll, ingest, seasonStart } from './service';
@@ -12,7 +12,8 @@ import { findDistrict } from '@fasalshield/shared/geo';
 
 /** Demo tooling (FR-21, brief 5.5). Disabled unless ENABLE_SIMULATOR=true; env schema forbids it in prod. */
 export const adminRouter = Router();
-adminRouter.use(requireAdminKey);
+// Signed-in staff only (password + authenticator code); each route narrows the roles.
+adminRouter.use(requireStaff());
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -20,7 +21,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
  * Simulate a drought (pctOfNormal < 100) or heavy rain (extraMmPerDay) over a district for a date range.
  * Writes a new sourceVersion of readings (revision, never overwrite), then re-runs trigger evaluation.
  */
-adminRouter.post('/simulator/scenarios', async (req, res) => {
+adminRouter.post('/simulator/scenarios', requireStaff('SYS_ADMIN', 'CLAIMS_OPS', 'PRODUCT_MANAGER'), async (req, res) => {
   if (!env.ENABLE_SIMULATOR) throw new HttpError(404, 'not_found');
   const input = body(
     req,
@@ -71,12 +72,13 @@ adminRouter.post('/simulator/scenarios', async (req, res) => {
       })),
     ),
   });
-  await audit({ actorType: 'STAFF', action: 'SIMULATION_RUN', entityType: 'IngestionRun', entityId: run.id, diff: input });
+  await audit({ actorType: 'STAFF', actorId: req.principal!.sub, action: 'SIMULATION_RUN', entityType: 'IngestionRun', entityId: run.id, diff: input });
   const result = await evaluateAll();
   res.status(201).json({ ingestionRunId: run.id, cells: cells.length, days: days.length, sourceVersion: version, ...result });
 });
 
-adminRouter.post('/evaluations', async (_req, res) => {
+adminRouter.post('/evaluations', requireStaff('SYS_ADMIN', 'CLAIMS_OPS'), async (req, res) => {
+  await audit({ actorType: 'STAFF', actorId: req.principal!.sub, action: 'EVALUATION_RUN', entityType: 'System' });
   await ingest(await seasonStart());
   res.json(await evaluateAll());
 });

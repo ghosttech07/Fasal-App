@@ -40,7 +40,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var r=document.referrer&&new URL(document.referrer);if(r&&r.origin===location.origin&&r.pathname.indexOf('/welcome')!==0)document.documentElement.dataset.splash='skip'}catch(e){}",
+              "try{var r=document.referrer&&new URL(document.referrer);if(location.pathname.indexOf('/admin')===0||(r&&r.origin===location.origin&&r.pathname.indexOf('/welcome')!==0))document.documentElement.dataset.splash='skip'}catch(e){}",
           }}
         />
         {process.env.NEXT_PUBLIC_DEMO === '1' ? (
