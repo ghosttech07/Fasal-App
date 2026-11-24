@@ -73,6 +73,6 @@ const simulator: WeatherProvider = {
 
 export const sms: SmsProvider = consoleSms;
 export const payments: PaymentProvider = mockPayments;
-// shortcut: only the simulator exists; WEATHER_PROVIDER=chirps|imerg needs the real connector (Q-10) before pilot.
+// WEATHER_PROVIDER=chirps loads real rain (adapters/rain.ts: CHIRPS v3 + NASA POWER); the simulator keeps the climatology normals.
 export const weather: WeatherProvider = simulator;
 logger.debug({ provider: env.WEATHER_PROVIDER }, 'weather provider');

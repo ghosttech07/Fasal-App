@@ -41,14 +41,14 @@ adminRouter.post('/simulator/scenarios', requireStaff('SYS_ADMIN', 'CLAIMS_OPS',
 
   await ingest(await seasonStart()); // make sure the baseline series exists before revising it
   const latest = await prisma.indexReading.aggregate({
-    where: { gridCellId: { in: cells.map((c) => c.id) }, dataSourceCode: weather.sourceCode },
+    where: { gridCellId: { in: cells.map((c) => c.id) } }, // above every source, so the scenario wins
     _max: { sourceVersion: true },
   });
   const version = (latest._max.sourceVersion ?? 1) + 1;
   const days = daysBetween(input.from, input.to);
   const run = await prisma.ingestionRun.create({
     data: {
-      dataSourceCode: weather.sourceCode,
+      dataSourceCode: 'SIMULATOR',
       fromDate: new Date(`${input.from}T00:00:00Z`),
       toDate: new Date(`${input.to}T00:00:00Z`),
       status: 'SUCCEEDED',
@@ -62,7 +62,7 @@ adminRouter.post('/simulator/scenarios', requireStaff('SYS_ADMIN', 'CLAIMS_OPS',
         gridCellId: c.id,
         obsDate: new Date(`${d}T00:00:00Z`),
         metric: 'RAIN_MM',
-        dataSourceCode: weather.sourceCode,
+        dataSourceCode: 'SIMULATOR',
         sourceVersion: version,
         value:
           Math.round(

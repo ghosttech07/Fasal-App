@@ -3,6 +3,7 @@ import { formatPaise } from '@fasalshield/shared';
 import { prisma } from '../../db';
 import { env } from '../../env';
 import { weather } from '../../adapters';
+import { CHIRPS, chirpsDay, pool, POWER, powerRange, type RainRow } from '../../adapters/rain';
 import { audit, canonical } from '../../lib/audit';
 import { sha256 } from '../../lib/crypto';
 import { logger } from '../../lib/logger';
@@ -28,6 +29,7 @@ async function activeCells() {
  * yesterday, skipping days already ingested. Idempotent - safe to run on every schedule tick.
  */
 export async function ingest(from: string, to = yesterday()) {
+  if (env.WEATHER_PROVIDER === 'chirps') return ingestReal(from, to);
   const cells = await activeCells();
   if (cells.length === 0 || from > to) return 0;
   const existing = await prisma.indexReading.findMany({
@@ -52,11 +54,75 @@ export async function ingest(from: string, to = yesterday()) {
   return rows.length;
 }
 
+/**
+ * Real rain (WEATHER_PROVIDER=chirps): CHIRPS for published days (oldest missing first, a few per run),
+ * NASA POWER for days that still have no reading. Bounded so one daily run fits the 60 s function limit;
+ * whatever is left is picked up by the next run. Idempotent: existing (cell, day, source) rows are skipped.
+ */
+async function ingestReal(from: string, to: string) {
+  const started = Date.now();
+  const cells = await prisma.gridCell.findMany({ where: { id: { in: await activeCells() } }, select: { id: true, minLat: true, minLng: true } });
+  if (cells.length === 0 || from > to) return 0;
+  const dates = daysBetween(from, to);
+  const existing = await prisma.indexReading.findMany({
+    where: { gridCellId: { in: cells.map((c) => c.id) }, metric: METRIC, dataSourceCode: { in: [CHIRPS.code, POWER.code] }, obsDate: { gte: asDate(from), lte: asDate(to) } },
+    select: { gridCellId: true, obsDate: true, dataSourceCode: true },
+  });
+  const key = (cell: number, d: string) => `${cell}:${d}`;
+  const chirpsHave = new Set(existing.filter((r) => r.dataSourceCode === CHIRPS.code).map((r) => key(r.gridCellId, r.obsDate.toISOString().slice(0, 10))));
+  const anyHave = new Set(existing.map((r) => key(r.gridCellId, r.obsDate.toISOString().slice(0, 10))));
+
+  // CHIRPS: oldest days first; stop at the first day not yet published (files come out in order).
+  const chirpsDays = dates.filter((d) => cells.some((c) => !chirpsHave.has(key(c.id, d)))).slice(0, 8);
+  const chirpsRows: RainRow[] = [];
+  const results = await pool(chirpsDays, 4, (d) => chirpsDay(d, cells));
+  for (const rows of results) {
+    if (rows === null) break;
+    if (rows) chirpsRows.push(...rows.filter((r) => !chirpsHave.has(key(r.gridCellId, r.date))));
+  }
+
+  // NASA POWER: per cell, the days with no reading from either source (and not just filled by CHIRPS).
+  const filled = new Set([...anyHave, ...chirpsRows.map((r) => key(r.gridCellId, r.date))]);
+  const powerRows: RainRow[] = [];
+  if (Date.now() - started < 35_000) {
+    const needs = cells
+      .map((c) => ({ c, days: dates.filter((d) => !filled.has(key(c.id, d))) }))
+      .filter((n) => n.days.length > 0);
+    const got = await pool(needs, 4, (n) => powerRange(n.c, n.days[0]!, n.days[n.days.length - 1]!));
+    for (const [i, rows] of got.entries()) {
+      const want = new Set(needs[i]!.days);
+      if (rows) powerRows.push(...rows.filter((r) => want.has(r.date)));
+    }
+  }
+
+  let written = 0;
+  for (const [src, rows] of [[CHIRPS, chirpsRows], [POWER, powerRows]] as const) {
+    if (rows.length === 0) continue;
+    const ds = rows.map((r) => r.date).sort();
+    const run = await prisma.ingestionRun.create({
+      data: { dataSourceCode: src.code, fromDate: asDate(ds[0]!), toDate: asDate(ds[ds.length - 1]!), status: 'SUCCEEDED', readingsWritten: rows.length },
+    });
+    await prisma.indexReading.createMany({
+      data: rows.map((r) => ({ gridCellId: r.gridCellId, obsDate: asDate(r.date), value: r.mm, metric: METRIC, dataSourceCode: src.code, sourceVersion: src.version, ingestionRunId: run.id })),
+      skipDuplicates: true,
+    });
+    written += rows.length;
+  }
+  logger.info({ cells: cells.length, chirps: chirpsRows.length, power: powerRows.length, ms: Date.now() - started }, 'real rain ingestion');
+  return written;
+}
+
 /** Latest source version per day for one cell (revisions win). */
 export async function rainSeries(gridCellId: number, from: string, to: string) {
   const readings = await prisma.indexReading.findMany({
-    where: { gridCellId, metric: METRIC, obsDate: { gte: asDate(from), lte: asDate(to) } },
-    orderBy: { sourceVersion: 'asc' },
+    where: {
+      gridCellId,
+      metric: METRIC,
+      obsDate: { gte: asDate(from), lte: asDate(to) },
+      // With real rain, the simulator's made-up baseline is ignored; admin-run scenarios (v2+) still apply.
+      ...(env.WEATHER_PROVIDER === 'chirps' ? { NOT: { dataSourceCode: 'SIMULATOR', sourceVersion: 1 } } : {}),
+    },
+    orderBy: [{ sourceVersion: 'asc' }, { ingestionRun: { createdAt: 'asc' } }], // later load wins a tie
   });
   const series = new Map<string, number>();
   const lineage = new Map<string, { sourceVersion: number; ingestionRunId: string; source: string }>();
@@ -75,6 +141,9 @@ export async function phaseStatus(policy: PolicyWithRules, asOf = yesterday()) {
   const first = rules.phases[0]!.from;
   const last = rules.phases[rules.phases.length - 1]!.to;
   const { series, lineage } = await rainSeries(policy.plot.gridCellId, first, asOf < last ? asOf : last);
+  // Real rain arrives days late: judge up to the last day that has data, never across the gap.
+  const latest = [...series.keys()].sort().at(-1);
+  if (latest && latest >= first && latest < asOf) asOf = latest;
   const result = evaluate({
     rules,
     asOf,
@@ -83,7 +152,7 @@ export async function phaseStatus(policy: PolicyWithRules, asOf = yesterday()) {
     sumInsuredPaise: policy.sumInsuredPaise,
     paid: policy.triggerEvents.map((e) => ({ phaseId: e.phaseId, slabLevel: e.slabLevel, amountPaise: e.payoutAmountPaise })),
   });
-  return { rules, series, lineage, ...result };
+  return { rules, series, lineage, asOf, ...result };
 }
 
 /**
@@ -100,17 +169,17 @@ export async function evaluateAll(asOf = yesterday()) {
   });
   let created = 0;
   for (const policy of policies) {
-    const { decisions, lineage, series, rules } = await phaseStatus(policy, asOf);
+    const { decisions, lineage, series, rules, asOf: dataTo } = await phaseStatus(policy, asOf);
     for (const decision of decisions) {
       const phase = rules.phases.find((p) => p.id === decision.phaseId)!;
-      const window = daysBetween(phase.from, asOf < phase.to ? asOf : phase.to);
+      const window = daysBetween(phase.from, dataTo < phase.to ? dataTo : phase.to);
       const evidence = {
         policyNumber: policy.policyNumber,
         gridCellId: policy.plot.gridCellId,
         productVersionId: policy.productVersionId,
         rulesSha256: policy.productVersion.rulesSha256,
         engineVersion: ENGINE_VERSION,
-        asOf,
+        asOf: dataTo,
         phase: decision.phaseId,
         window: [window[0], window[window.length - 1]],
         readings: window.map((d) => ({ obsDate: d, value: series.get(d), ...lineage.get(d) })),

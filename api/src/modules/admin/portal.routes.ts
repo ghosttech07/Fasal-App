@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 import { formatPaise } from '@fasalshield/shared';
 import { prisma } from '../../db';
+import { env } from '../../env';
 import { payments, weather } from '../../adapters';
 import { audit, canonical } from '../../lib/audit';
 import { requireStaff, STAFF_ROLES, type StaffRole } from '../../lib/auth';
@@ -1007,7 +1008,8 @@ portalRouter.get('/rain', async (req, res) => {
           FROM "IndexReading" ir
           WHERE ir."gridCellId" = ANY(${cells.map((c) => c.id)}) AND ir.metric = 'RAIN_MM'
             AND ir."obsDate" BETWEEN ${new Date(`${from}T00:00:00Z`)} AND ${new Date(`${to}T00:00:00Z`)}
-          ORDER BY ir."gridCellId", ir."obsDate", ir."sourceVersion" DESC
+            AND NOT (${env.WEATHER_PROVIDER === 'chirps'} AND ir."dataSourceCode" = 'SIMULATOR' AND ir."sourceVersion" = 1)
+          ORDER BY ir."gridCellId", ir."obsDate", ir."sourceVersion" DESC, ir."ingestionRunId" DESC
         ) r GROUP BY r."gridCellId"`
     : [];
   const byCell = new Map(sums.map((s) => [s.gridCellId, s]));
@@ -1024,7 +1026,7 @@ portalRouter.get('/rain', async (req, res) => {
     district: district ?? null,
     from,
     to,
-    source: weather.sourceCode,
+    source: env.WEATHER_PROVIDER === 'chirps' ? 'REAL' : weather.sourceCode,
     cells: cells.map((c) => {
       const s = byCell.get(c.id);
       const normal = dayList.reduce((acc, d) => acc + weather.normalRainMm(c.id, d), 0);

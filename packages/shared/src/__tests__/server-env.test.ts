@@ -140,3 +140,11 @@ describe('loadServerEnv', () => {
     ).not.toThrow();
   });
 });
+
+describe('WEATHER_PROVIDER default', () => {
+  it('uses the simulator locally and real rain (chirps) on staging', () => {
+    expect(loadServerEnv(localEnv()).WEATHER_PROVIDER).toBe('simulator');
+    expect(loadServerEnv(localEnv({ APP_ENV: 'staging' })).WEATHER_PROVIDER).toBe('chirps');
+    expect(loadServerEnv(localEnv({ APP_ENV: 'staging', WEATHER_PROVIDER: 'simulator' })).WEATHER_PROVIDER).toBe('simulator');
+  });
+});

@@ -93,3 +93,11 @@ export const can = {
   handleCases: (r: string) => r === 'SYS_ADMIN' || r === 'CLAIMS_OPS',
   readCases: (r: string) => r === 'SYS_ADMIN' || r === 'CLAIMS_OPS' || r === 'REGULATOR',
 };
+
+/** Where rain numbers come from, in words. */
+export const SOURCE_LABEL: Record<string, string> = {
+  SIMULATOR: 'simulator (demo)',
+  NASA_POWER: 'NASA POWER satellite (early)',
+  CHIRPS_V3: 'CHIRPS v3 satellite + gauges (final)',
+  REAL: 'CHIRPS v3 (final) and NASA POWER (early)',
+};

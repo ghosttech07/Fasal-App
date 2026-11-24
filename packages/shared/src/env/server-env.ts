@@ -80,7 +80,8 @@ const baseSchema = z.object({
   PUSH_PROVIDER: z.enum(['mock', 'fcm']).default('mock'),
   PAYMENT_PROVIDER: z.enum(['mock', 'razorpayx', 'cashfree']).default('mock'),
   KYC_PROVIDER: z.enum(['mock', 'digilocker']).default('mock'),
-  WEATHER_PROVIDER: z.enum(['simulator', 'chirps', 'imerg']).default('simulator'),
+  /** Unset: real rain (chirps) on staging/prod, the simulator locally. */
+  WEATHER_PROVIDER: z.enum(['simulator', 'chirps', 'imerg']).optional(),
   ENABLE_SIMULATOR: booleanFromString.default('false'),
   /** Demo deployments without an SMS provider: return the OTP in the API response. Forbidden in prod. */
   DEMO_SHOW_OTP: booleanFromString.default('false'),
@@ -126,7 +127,12 @@ const REAL_PROVIDER_CREDENTIALS: ReadonlyArray<{
   { key: 'KYC_PROVIDER', mockValues: ['mock'], credential: 'KYC_API_KEY' },
 ];
 
-export const serverEnvSchema = baseSchema.superRefine((env, ctx) => {
+export const serverEnvSchema = baseSchema
+  .transform((env) => ({
+    ...env,
+    WEATHER_PROVIDER: env.WEATHER_PROVIDER ?? (env.APP_ENV === 'staging' || env.APP_ENV === 'prod' ? 'chirps' : 'simulator'),
+  }))
+  .superRefine((env, ctx) => {
   // Real providers need their credentials, in every environment.
   for (const { key, mockValues, credential } of REAL_PROVIDER_CREDENTIALS) {
     if (!mockValues.includes(env[key]) && !env[credential]) {

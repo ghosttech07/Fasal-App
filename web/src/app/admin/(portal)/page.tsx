@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { rupees } from '@/lib/format';
-import { adminGet, districtName, since, when } from '@/lib/admin';
+import { adminGet, districtName, since, SOURCE_LABEL, when } from '@/lib/admin';
 import { PageHead, Unavailable } from '@/components/admin/ui';
 
 type Dashboard = {
@@ -233,9 +233,9 @@ export default async function Dashboard() {
               {a.lastRain ? `updated ${when(a.lastRain.at)}` : 'not loaded yet'}
               <br />
               <span className="adm-muted">
-                {a.lastRain?.source === 'SIMULATOR'
-                  ? 'Source: simulator (demo)'
-                  : (a.lastRain?.source ?? '')}
+                {a.lastRain
+                  ? `Source: ${SOURCE_LABEL[a.lastRain.source] ?? a.lastRain.source}`
+                  : ''}
               </span>
             </div>
           </div>

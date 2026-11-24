@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { adminGet, can, currentStaff, districtName, when } from '@/lib/admin';
+import { adminGet, can, currentStaff, districtName, SOURCE_LABEL, when } from '@/lib/admin';
 import { Simulator } from '@/components/admin/actions';
 import { PageHead, Unavailable } from '@/components/admin/ui';
 
@@ -57,7 +57,7 @@ export default async function RainData({
     <>
       <PageHead
         title="Rain data"
-        sub={`Rain on each 5 km cell with fields, ${d.from} to ${d.to}, against its normal. Source: ${d.source === 'SIMULATOR' ? 'simulator (demo)' : d.source}.`}
+        sub={`Rain on each 5 km cell with fields, ${d.from} to ${d.to}, against its normal. Source: ${SOURCE_LABEL[d.source] ?? d.source}.`}
       />
       <nav className="adm-tools" aria-label="District">
         {d.districts.map((x) => (
@@ -130,7 +130,7 @@ export default async function RainData({
               {d.runs.map((r) => (
                 <tr key={r.id}>
                   <td>{when(r.at)}</td>
-                  <td>{r.source}</td>
+                  <td>{SOURCE_LABEL[r.source] ?? r.source}</td>
                   <td className="adm-muted">
                     {String(r.from).slice(0, 10)} → {String(r.to).slice(0, 10)}
                   </td>
