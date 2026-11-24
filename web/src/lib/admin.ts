@@ -43,6 +43,11 @@ export function since(iso: string | Date | null | undefined) {
 
 export const STATUS_LABEL: Record<string, { text: string; tone: '' | 'warn' | 'bad' | 'plain' }> = {
   AWAITING_BATCH: { text: 'Waiting for batch', tone: 'warn' },
+  OPEN: { text: 'New', tone: 'warn' },
+  IN_PROGRESS: { text: 'Being checked', tone: 'plain' },
+  RESOLVED: { text: 'Answered', tone: '' },
+  FLAGGED: { text: 'Flagged', tone: 'bad' },
+  UNVERIFIED: { text: 'Not checked', tone: 'warn' },
   QUEUED: { text: 'In a batch', tone: 'plain' },
   SENT: { text: 'Sent', tone: 'plain' },
   PENDING: { text: 'Pending', tone: 'plain' },
@@ -85,4 +90,6 @@ export const can = {
   editProducts: (r: string) => r === 'PRODUCT_MANAGER' || r === 'SYS_ADMIN',
   simulate: (r: string) => r === 'SYS_ADMIN' || r === 'CLAIMS_OPS' || r === 'PRODUCT_MANAGER',
   manageStaff: (r: string) => r === 'SYS_ADMIN',
+  handleCases: (r: string) => r === 'SYS_ADMIN' || r === 'CLAIMS_OPS',
+  readCases: (r: string) => r === 'SYS_ADMIN' || r === 'CLAIMS_OPS' || r === 'REGULATOR',
 };

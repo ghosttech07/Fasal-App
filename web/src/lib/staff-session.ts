@@ -60,6 +60,7 @@ export type StaffUser = {
   name: string | null;
   role: StaffRole;
   mustChangePassword?: boolean;
+  passwordOnly?: boolean;
 };
 export type StaffRole =
   'PRODUCT_MANAGER' | 'CLAIMS_OPS' | 'PAYOUT_APPROVER' | 'SYS_ADMIN' | 'REINSURER' | 'REGULATOR';

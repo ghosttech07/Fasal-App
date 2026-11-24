@@ -312,32 +312,38 @@ export default async function AccountPage() {
             <Row
               icon={<FileText size={20} />}
               label="Terms of cover"
-              detail="The insurer's policy wording"
-              state="soon"
+              detail="How the cover works, in plain words"
+              href="/legal/terms"
             />
             <Row
               icon={<FileText size={20} />}
               label="Payments and refunds"
               detail="Where your premium goes · cancelling"
-              state="soon"
+              href="/legal/terms"
             />
             <Row
               icon={<ShieldCheck size={20} />}
               label="Your data"
-              detail="See it, withdraw consent or delete it"
-              state="soon"
+              detail="What we keep, who sees it, your rights"
+              href="/legal/privacy"
             />
             <Row
               icon={<Scale size={20} />}
               label="Complaints"
               detail="Grievance officer · Bima Bharosa · Ombudsman"
-              state="soon"
+              href="/legal/grievance"
             />
             <Row
               icon={<Headphones size={20} />}
-              label="Help"
-              detail="Call or WhatsApp us, or ask your field agent"
-              state="soon"
+              label="Tell us a problem"
+              detail="We answer within 14 days"
+              href="/help"
+            />
+            <Row
+              icon={<Bell size={20} />}
+              label="Messages"
+              detail="Money sent, rain marks, answers"
+              href="/inbox"
             />
           </div>
         </section>

@@ -7,6 +7,8 @@ import {
   CloudRain,
   KeyRound,
   LayoutDashboard,
+  MapPinned,
+  MessageSquareWarning,
   Layers,
   ScrollText,
   UserCog,
@@ -20,6 +22,8 @@ const ITEMS = [
   { href: '/admin/triggers', label: 'Trigger events', icon: Zap },
   { href: '/admin/products', label: 'Products', icon: Layers },
   { href: '/admin/farmers', label: 'Farmers & policies', icon: Users },
+  { href: '/admin/grievances', label: 'Complaints', icon: MessageSquareWarning, cases: true },
+  { href: '/admin/fields', label: 'Land checks', icon: MapPinned, cases: true },
   { href: '/admin/rain', label: 'Rain data', icon: CloudRain },
   { href: '/admin/audit', label: 'Audit log', icon: ScrollText },
   { href: '/admin/staff', label: 'Staff & roles', icon: UserCog, adminOnly: true },
@@ -31,22 +35,24 @@ export function StaffNav({ role }: { role: string }) {
   const path = usePathname();
   return (
     <nav aria-label="Sections" style={{ display: 'grid', gap: 4 }}>
-      {ITEMS.filter((i) => !('adminOnly' in i) || role === 'SYS_ADMIN').map(
-        ({ href, label, icon: Icon }) => {
-          const here = href === '/admin' ? path === href : path.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className="adm-link"
-              aria-current={here ? 'page' : undefined}
-            >
-              <Icon size={18} aria-hidden="true" />
-              {label}
-            </Link>
-          );
-        },
-      )}
+      {ITEMS.filter(
+        (i) =>
+          (!('adminOnly' in i) || role === 'SYS_ADMIN') &&
+          (!('cases' in i) || ['SYS_ADMIN', 'CLAIMS_OPS', 'REGULATOR'].includes(role)),
+      ).map(({ href, label, icon: Icon }) => {
+        const here = href === '/admin' ? path === href : path.startsWith(href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            className="adm-link"
+            aria-current={here ? 'page' : undefined}
+          >
+            <Icon size={18} aria-hidden="true" />
+            {label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { ArrowRight, Bell, Check, ChevronLeft, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -110,6 +111,11 @@ export default function StartPage() {
               </li>
             ))}
           </ol>
+          <p className="hint">
+            Full text: <Link href="/legal/terms">Terms of use</Link> ·{' '}
+            <Link href="/legal/privacy">Privacy</Link> ·{' '}
+            <Link href="/legal/grievance">Complaints</Link>
+          </p>
 
           <div className="ob-perms">
             <h2 className="ob-perms-h">Allow on this phone</h2>

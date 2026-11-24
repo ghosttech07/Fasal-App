@@ -786,3 +786,120 @@ export function StaffRow({
     </div>
   );
 }
+
+// ---------- Complaints and land checks ----------
+
+/** Reply to a farmer's complaint; the reply goes to the farmer's in-app messages. */
+export function AnswerGrievance({ id }: { id: string }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function go(status: 'IN_PROGRESS' | 'RESOLVED') {
+    if (text.trim().length < 5) return setErr('Write the answer the farmer will read.');
+    setBusy(true);
+    setErr(null);
+    try {
+      await adminCall('PATCH', `grievances/${id}`, { status, response: text.trim() });
+      setOpen(false);
+      setText('');
+      router.refresh();
+    } catch (e) {
+      setErr(say(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (!open)
+    return (
+      <button className="adm-btn line" onClick={() => setOpen(true)}>
+        Answer
+      </button>
+    );
+  return (
+    <div style={{ display: 'grid', gap: 8, minWidth: 260 }}>
+      <textarea
+        aria-label="Answer to the farmer"
+        rows={3}
+        maxLength={1000}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Plain words the farmer will read in the app"
+        style={{
+          font: 'inherit',
+          padding: 8,
+          borderRadius: 8,
+          border: '1px solid var(--adm-rule, #d6ded8)',
+        }}
+      />
+      {err ? (
+        <span role="alert" style={{ color: '#b42318', fontSize: 13 }}>
+          {err}
+        </span>
+      ) : null}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button className="adm-btn" disabled={busy} onClick={() => go('RESOLVED')}>
+          Send and close
+        </button>
+        <button className="adm-btn line" disabled={busy} onClick={() => go('IN_PROGRESS')}>
+          Send update
+        </button>
+        <button className="adm-btn line" disabled={busy} onClick={() => setOpen(false)}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Record the result of checking a field against the 7/12 land record. */
+export function CheckField({ id }: { id: string }) {
+  const router = useRouter();
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function go(decision: 'VERIFIED' | 'REJECTED') {
+    if (note.trim().length < 3) return setErr('Add a short note, e.g. "7/12 name and area match".');
+    setBusy(true);
+    setErr(null);
+    try {
+      await adminCall('POST', `fields/${id}/check`, { decision, note: note.trim() });
+      router.refresh();
+    } catch (e) {
+      setErr(say(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div style={{ display: 'grid', gap: 6, minWidth: 220 }}>
+      <input
+        aria-label="Check note"
+        maxLength={300}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="7/12 name, survey no. and area match"
+        style={{
+          font: 'inherit',
+          padding: '6px 8px',
+          borderRadius: 8,
+          border: '1px solid #d6ded8',
+        }}
+      />
+      {err ? (
+        <span role="alert" style={{ color: '#b42318', fontSize: 13 }}>
+          {err}
+        </span>
+      ) : null}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button className="adm-btn" disabled={busy} onClick={() => go('VERIFIED')}>
+          Verified
+        </button>
+        <button className="adm-btn line" disabled={busy} onClick={() => go('REJECTED')}>
+          Reject
+        </button>
+      </div>
+    </div>
+  );
+}

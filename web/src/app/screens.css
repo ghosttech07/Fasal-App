@@ -1651,3 +1651,140 @@ a.acc-row {
     animation: none;
   }
 }
+
+/* Terms, privacy and grievance pages */
+.legal section {
+  display: grid;
+  gap: 8px;
+}
+.legal h2 {
+  font-size: 20px;
+  margin: 8px 0 0;
+}
+.legal p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.legal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule, #d6ded8);
+}
+.legal-nav a {
+  color: var(--board);
+  font-weight: 600;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Help (complaints) and messages */
+.choice-list {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--rule);
+  border-radius: 8px;
+  font-size: 17px;
+  cursor: pointer;
+}
+.choice[data-on='true'] {
+  border-color: var(--board);
+  box-shadow: inset 0 0 0 1px var(--board);
+}
+.choice input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--board);
+  margin: 0;
+}
+.field.area {
+  align-items: stretch;
+  padding: 12px 16px;
+}
+.field.area textarea {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--ink);
+  resize: vertical;
+  min-height: 110px;
+}
+.g-list {
+  display: grid;
+  gap: 10px;
+}
+.g-item,
+.inbox li {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+}
+.g-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.g-answer {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--ok-bg);
+  border-radius: 8px;
+  font-size: 16px;
+  color: var(--ink);
+}
+.tag-wait {
+  background: #fbebd9;
+  color: #8a4b06;
+}
+.inbox {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.inbox li[data-unread='true'] {
+  border-color: var(--board);
+  box-shadow: inset 3px 0 0 var(--board);
+}
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  color: var(--ink-2);
+  padding: 48px 8px;
+}
+.empty p {
+  margin: 0;
+  max-width: 30ch;
+  font-size: 16px;
+}
+.small a {
+  color: var(--board);
+  font-weight: 600;
+  text-decoration: underline;
+}

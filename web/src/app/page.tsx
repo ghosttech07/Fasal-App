@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Bell,
   CircleUserRound,
   Banknote,
   Check,
@@ -236,8 +237,13 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
 
 function AccountButton() {
   return (
-    <Link href="/account" className="acc-btn" aria-label="Your account">
-      <CircleUserRound size={24} aria-hidden="true" />
-    </Link>
+    <span style={{ display: 'flex', gap: 8 }}>
+      <Link href="/inbox" className="acc-btn" aria-label="Messages">
+        <Bell size={22} aria-hidden="true" />
+      </Link>
+      <Link href="/account" className="acc-btn" aria-label="Your account">
+        <CircleUserRound size={24} aria-hidden="true" />
+      </Link>
+    </span>
   );
 }

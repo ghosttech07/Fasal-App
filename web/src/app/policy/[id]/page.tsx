@@ -134,6 +134,19 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
           ))}
+          <a
+            className="small"
+            href={`/help?policy=${p.id}`}
+            style={{
+              color: 'var(--board)',
+              fontWeight: 600,
+              minHeight: 44,
+              display: 'inline-flex',
+              alignItems: 'center',
+            }}
+          >
+            Crop damaged but no money came? Tell us
+          </a>
         </div>
       </div>
     </main>

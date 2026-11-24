@@ -34,6 +34,7 @@ export default function FieldPage() {
   const [reading, setReading] = useState<number | null>(null); // live best accuracy while locating
   const [locating, setLocating] = useState(false);
   const [acres, setAcres] = useState(2);
+  const [survey, setSurvey] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +73,7 @@ export default function FieldPage() {
         accuracyM: method === 'DRAW' ? 0 : Math.round(accuracy!),
         areaAcres: acres,
         captureMethod: method,
+        surveyNo: survey.trim() || undefined,
       });
       router.push('/setup/upi');
     } catch (e) {
@@ -179,6 +181,25 @@ export default function FieldPage() {
               <Plus size={24} aria-hidden="true" />
             </button>
           </div>
+        </div>
+        <div>
+          <label className="label" htmlFor="survey">
+            Survey / gat number <span className="small">(from your 7/12, optional)</span>
+          </label>
+          <div className="field text">
+            <input
+              id="survey"
+              inputMode="text"
+              autoCapitalize="characters"
+              maxLength={20}
+              placeholder="For example 112/2"
+              value={survey}
+              onChange={(e) => setSurvey(e.target.value.replace(/[^0-9A-Za-z/ -]/g, ''))}
+            />
+          </div>
+          <p className="small">
+            Helps us confirm this land is yours, so payouts are not held up later.
+          </p>
         </div>
         {error ? <FormError>{error}</FormError> : null}
       </div>

@@ -25,7 +25,7 @@ export default async function PortalLayout({ children }: { children: React.React
         <div className="adm-me">
           <div>
             <b>{user.name ?? user.email}</b>
-            {ROLE_LABEL[user.role]} · two-step on
+            {ROLE_LABEL[user.role]} · {user.passwordOnly ? 'password sign-in' : 'two-step on'}
           </div>
           <SignOutStaff />
         </div>

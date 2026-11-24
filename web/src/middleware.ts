@@ -23,6 +23,8 @@ const PUBLIC = ['/login', '/otp', '/start'];
 export async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname === '/admin' || req.nextUrl.pathname.startsWith('/admin/'))
     return staffGuard(req);
+  // Terms, privacy and grievance pages are open to everyone, signed in or not.
+  if (req.nextUrl.pathname.startsWith('/legal/')) return NextResponse.next();
   const isPublic = PUBLIC.includes(req.nextUrl.pathname);
   const access = req.cookies.get(ACCESS_COOKIE)?.value;
   const refresh = req.cookies.get(REFRESH_COOKIE)?.value;
