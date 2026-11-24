@@ -19,8 +19,8 @@ const crops = [
   { code: 'GRAM', icon: 'local_florist', namesI18n: { en: 'Gram (Chana)', hi: 'चना', mr: 'हरभरा' } },
 ];
 
-// Covers are offered in four Marathwada districts (state-qualified codes, see @fasalshield/shared/geo).
-const DISTRICTS = ['MH-LATUR', 'MH-BEED', 'MH-DHARASHIV', 'MH-NANDED'];
+// Demo covers are open in every district of India ('*'); payouts use each field's own normal rainfall.
+const DISTRICTS = ['*'];
 
 async function main() {
   const insurer = await prisma.organisation.upsert({
@@ -120,7 +120,7 @@ async function main() {
         waitingPeriodDays: 0, // demo only: docs default is 7 days (FR-15)
         publishedAt: new Date(),
       },
-      update: {},
+      update: { eligibleDistricts: DISTRICTS }, // eligibility is outside the hashed rules
     });
   }
   console.warn('Seed complete: 2 products, 6 crops, season RABI_2026, demo agent +919000000001');

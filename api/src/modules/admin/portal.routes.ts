@@ -12,6 +12,7 @@ import { body, HttpError } from '../../lib/http';
 import { hashPassword } from '../../lib/staff-auth';
 import { rulesSchema } from '../../rules/engine';
 import { requireFreshCode } from '../staff.routes';
+import { loadNormals } from '../triggers/service';
 import { randomBytes } from 'node:crypto';
 
 /**
@@ -1013,6 +1014,7 @@ portalRouter.get('/rain', async (req, res) => {
         ) r GROUP BY r."gridCellId"`
     : [];
   const byCell = new Map(sums.map((s) => [s.gridCellId, s]));
+  await loadNormals(cells.map((c) => c.id));
   const dayList: string[] = [];
   for (
     let t = new Date(`${from}T00:00:00Z`).getTime();

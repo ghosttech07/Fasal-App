@@ -14,7 +14,7 @@ const icon = L.divIcon({
   iconAnchor: [17, 43],
 });
 
-const LATUR = { lat: 18.4, lng: 76.57 };
+const INDIA = { lat: 22.5, lng: 79 }; // centre of India until the field is pinned
 
 function Follow({ pin }: { pin: Pin | null }) {
   const map = useMap();
@@ -41,8 +41,8 @@ export default function FieldMap({
 }) {
   return (
     <MapContainer
-      center={pin ?? LATUR}
-      zoom={pin ? 16 : 10}
+      center={pin ?? INDIA}
+      zoom={pin ? 16 : 4}
       scrollWheelZoom={false}
       attributionControl
     >

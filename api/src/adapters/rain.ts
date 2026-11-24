@@ -84,3 +84,21 @@ export async function pool<T, R>(items: T[], limit: number, run: (t: T) => Promi
   );
   return out;
 }
+
+/** Long-term monthly mean rain (mm/day, Jan..Dec) at a cell, from NASA POWER climatology (free). */
+export async function powerNormals(cell: CellRef): Promise<number[]> {
+  const q = new URLSearchParams({
+    parameters: 'PRECTOTCORR',
+    community: 'AG',
+    latitude: (cell.minLat + CELL / 2).toFixed(4),
+    longitude: (cell.minLng + CELL / 2).toFixed(4),
+    format: 'JSON',
+  });
+  const r = await fetch(`https://power.larc.nasa.gov/api/temporal/climatology/point?${q}`, { signal: AbortSignal.timeout(15_000) });
+  if (!r.ok) throw new Error(`NASA POWER climatology cell ${cell.id}: HTTP ${r.status}`);
+  const body = (await r.json()) as { properties?: { parameter?: { PRECTOTCORR?: Record<string, number> } } };
+  const m = body.properties?.parameter?.PRECTOTCORR ?? {};
+  const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'].map((k) => m[k]);
+  if (months.some((v) => typeof v !== 'number' || !Number.isFinite(v) || v < 0)) throw new Error(`NASA POWER climatology cell ${cell.id}: incomplete`);
+  return months as number[];
+}

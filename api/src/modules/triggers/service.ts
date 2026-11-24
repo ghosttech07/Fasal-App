@@ -2,8 +2,8 @@ import type { Prisma } from '@prisma/client';
 import { formatPaise } from '@fasalshield/shared';
 import { prisma } from '../../db';
 import { env } from '../../env';
-import { weather } from '../../adapters';
-import { CHIRPS, chirpsDay, pool, POWER, powerRange, type RainRow } from '../../adapters/rain';
+import { cellNormals, weather } from '../../adapters';
+import { CHIRPS, chirpsDay, pool, POWER, powerNormals, powerRange, type RainRow } from '../../adapters/rain';
 import { audit, canonical } from '../../lib/audit';
 import { sha256 } from '../../lib/crypto';
 import { logger } from '../../lib/logger';
@@ -112,6 +112,32 @@ async function ingestReal(from: string, to: string) {
   return written;
 }
 
+/**
+ * Makes each cell's local normal rainfall available to weather.normalRainMm: from the database, or fetched
+ * once from NASA POWER climatology and saved. Returns the cells that have local normals. A few fetches per
+ * call (bounded time); cells left over are fetched on the next run.
+ */
+export async function loadNormals(cellIds: number[]) {
+  const ids = [...new Set(cellIds)];
+  const cells = await prisma.gridCell.findMany({ where: { id: { in: ids } }, select: { id: true, minLat: true, minLng: true, normalsMmPerDay: true } });
+  const missing = cells.filter((c) => c.normalsMmPerDay.length !== 12).slice(0, 12);
+  const got = await pool(missing, 4, (c) => powerNormals(c));
+  for (const [i, normals] of got.entries()) {
+    if (!normals) continue;
+    const c = missing[i]!;
+    c.normalsMmPerDay = normals;
+    await prisma.gridCell.update({ where: { id: c.id }, data: { normalsMmPerDay: normals } });
+  }
+  const ready = new Set<number>();
+  for (const c of cells) {
+    if (c.normalsMmPerDay.length === 12) {
+      cellNormals.set(c.id, c.normalsMmPerDay);
+      ready.add(c.id);
+    }
+  }
+  return ready;
+}
+
 /** Latest source version per day for one cell (revisions win). */
 export async function rainSeries(gridCellId: number, from: string, to: string) {
   const readings = await prisma.indexReading.findMany({
@@ -137,6 +163,7 @@ export async function rainSeries(gridCellId: number, from: string, to: string) {
 type PolicyWithRules = Prisma.PolicyGetPayload<{ include: { productVersion: true; plot: true; triggerEvents: true; farmer: true } }>;
 
 export async function phaseStatus(policy: PolicyWithRules, asOf = yesterday()) {
+  if (!cellNormals.has(policy.plot.gridCellId)) await loadNormals([policy.plot.gridCellId]);
   const rules = rulesSchema.parse(policy.productVersion.rules);
   const first = rules.phases[0]!.from;
   const last = rules.phases[rules.phases.length - 1]!.to;
@@ -167,8 +194,11 @@ export async function evaluateAll(asOf = yesterday()) {
     where: { status: { in: ['ACTIVE', 'IN_WAITING'] } },
     include: { productVersion: true, plot: true, triggerEvents: true, farmer: { include: { wallets: { where: { isPrimary: true, status: 'VERIFIED' } } } } },
   });
+  const withNormals = await loadNormals(policies.map((p) => p.plot.gridCellId));
   let created = 0;
   for (const policy of policies) {
+    // Real rain is judged only against the field's own normal, never against another region's figures.
+    if (env.WEATHER_PROVIDER === 'chirps' && !withNormals.has(policy.plot.gridCellId)) continue;
     const { decisions, lineage, series, rules, asOf: dataTo } = await phaseStatus(policy, asOf);
     for (const decision of decisions) {
       const phase = rules.phases.find((p) => p.id === decision.phaseId)!;

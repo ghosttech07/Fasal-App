@@ -52,15 +52,21 @@ const mockPayments: PaymentProvider = {
   },
 };
 
-// Marathwada monthly normals (mm), roughly IMD 1991-2020; spread evenly over the month.
+// Demo fallback only: Marathwada monthly normals (mm), roughly IMD 1991-2020. Real cells use NASA climatology.
 const MONTHLY_NORMAL_MM = [4, 3, 8, 9, 20, 140, 190, 180, 170, 70, 25, 8];
 
 const daysInMonth = (y: number, m: number) => new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
 
+/** Local normals per cell (mm/day by month), filled from the database by loadNormals() before use. */
+export const cellNormals = new Map<number, number[]>();
+
 const simulator: WeatherProvider = {
   sourceCode: 'SIMULATOR',
-  normalRainMm(_cell, date) {
+  normalRainMm(cell, date) {
     const d = new Date(`${date}T00:00:00Z`);
+    const local = cellNormals.get(cell);
+    if (local?.length === 12) return local[d.getUTCMonth()]!;
+    // Fallback (simulator demo only): Marathwada monthly normals spread over the month.
     return (MONTHLY_NORMAL_MM[d.getUTCMonth()] ?? 0) / daysInMonth(d.getUTCFullYear(), d.getUTCMonth());
   },
   dailyRainMm(cell, date) {

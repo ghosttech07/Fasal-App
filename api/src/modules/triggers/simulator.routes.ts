@@ -7,7 +7,7 @@ import { audit, verifyAuditChain } from '../../lib/audit';
 import { requireStaff } from '../../lib/auth';
 import { body, HttpError } from '../../lib/http';
 import { daysBetween } from '../../rules/engine';
-import { evaluateAll, ingest, seasonStart } from './service';
+import { evaluateAll, ingest, loadNormals, seasonStart } from './service';
 import { findDistrict } from '@fasalshield/shared/geo';
 
 /** Demo tooling (FR-21, brief 5.5). Disabled unless ENABLE_SIMULATOR=true; env schema forbids it in prod. */
@@ -40,6 +40,7 @@ adminRouter.post('/simulator/scenarios', requireStaff('SYS_ADMIN', 'CLAIMS_OPS',
   if (cells.length === 0) throw new HttpError(422, 'no_plots_in_district');
 
   await ingest(await seasonStart()); // make sure the baseline series exists before revising it
+  await loadNormals(cells.map((c) => c.id));
   const latest = await prisma.indexReading.aggregate({
     where: { gridCellId: { in: cells.map((c) => c.id) } }, // above every source, so the scenario wins
     _max: { sourceVersion: true },

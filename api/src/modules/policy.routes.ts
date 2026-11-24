@@ -40,7 +40,7 @@ policyRouter.post('/quotes', async (req, res) => {
       status: 'PUBLISHED',
       seasonCode: input.seasonCode,
       eligibleCrops: { has: input.cropCode },
-      eligibleDistricts: { has: plot.farmer.districtCode ?? '' },
+      eligibleDistricts: { hasSome: [plot.farmer.districtCode ?? '', '*'] }, // '*' = every district of India
       enrolmentCutoff: { gte: todayDate() },
     },
     include: { product: true },

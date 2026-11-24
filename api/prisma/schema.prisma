@@ -207,6 +207,7 @@ model GridCell {
   minLng       Float
   districtCode String?
   isCropland   Boolean        @default(true)
+  normalsMmPerDay Float[] // 12 monthly long-term means (Jan..Dec), NASA POWER climatology; empty = not fetched yet
   plots        Plot[]
   readings     IndexReading[]
 }

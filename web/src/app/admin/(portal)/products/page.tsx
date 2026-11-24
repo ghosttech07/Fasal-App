@@ -148,7 +148,10 @@ export default async function Products() {
               </table>
             </div>
             <p className="adm-muted" style={{ margin: 0 }}>
-              Districts: {(latest?.eligibleDistricts ?? []).map(districtName).join(', ') || '—'}
+              Districts:{' '}
+              {(latest?.eligibleDistricts ?? [])
+                .map((d) => (d === '*' ? 'All India' : districtName(d)))
+                .join(', ') || '—'}
               {latest?.rulesSha256 ? (
                 <>
                   {' '}
