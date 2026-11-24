@@ -5,6 +5,7 @@ import './screens.css';
 import 'leaflet/dist/leaflet.css';
 import { Splash } from '@/components/splash';
 import { NetStatus } from '@/components/net-status';
+import { RegisterSW } from '@/components/register-sw';
 
 // Self-hosted at build time by next/font: no third-party font request on the farmer's data plan.
 const body = Barlow({
@@ -23,6 +24,8 @@ const figures = Barlow_Semi_Condensed({
 export const metadata: Metadata = {
   title: 'FasalShield',
   description: 'Crop cover that pays when the rain fails',
+  icons: { apple: '/icons/icon-180.png' },
+  appleWebApp: { capable: true, title: 'FasalShield', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {
@@ -47,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <div className="demo-strip">Demo · test data only, no real money</div>
         ) : null}
         <NetStatus />
+        <RegisterSW />
         <Splash />
         {children}
       </body>

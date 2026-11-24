@@ -89,5 +89,5 @@ function cameFromSite(req: NextRequest): boolean {
 
 export const config = {
   // welcome/ is the static public landing page and its media: no session needed.
-  matcher: ['/((?!api/|_next/|welcome|favicon.ico|icon|manifest).*)'],
+  matcher: ['/((?!api/|_next/|welcome|favicon.ico|icon|manifest|sw.js|offline.html).*)'],
 };
