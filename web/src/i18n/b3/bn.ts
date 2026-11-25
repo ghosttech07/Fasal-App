@@ -124,4 +124,6 @@ export const bn: Dict = {
   'help.how': 'বিমা কোম্পানি বা IRDAI-কে কীভাবে অভিযোগ করবেন',
   'help.send': 'পাঠান',
   'help.sending': 'পাঠানো হচ্ছে',
+  'err.account_disabled':
+    'এই অ্যাকাউন্ট বন্ধ করা হয়েছে। আপনার FPO বা FasalShield-এর সঙ্গে যোগাযোগ করুন।',
 };

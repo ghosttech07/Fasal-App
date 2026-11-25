@@ -403,6 +403,8 @@ export const en = {
   'help.how': 'how to complain to the insurer or IRDAI',
   'help.send': 'Send',
   'help.sending': 'Sending',
+  'err.account_disabled':
+    'This account has been switched off. Please contact your FPO or FasalShield.',
 } as const;
 
 export type Key = keyof typeof en;

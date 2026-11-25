@@ -16,6 +16,12 @@ import { createPlot, linkWallet, NOTICE_VERSION, plotInputSchema } from './farme
  */
 export const agentRouter = Router();
 agentRouter.use(requireRole('AGENT'));
+// A disabled agent is locked out at once, even with an access token that has not expired yet.
+agentRouter.use(async (req, _res, next) => {
+  const agent = await prisma.agent.findUnique({ where: { id: req.principal!.sub }, select: { status: true } });
+  if (agent?.status !== 'ACTIVE') return next(new HttpError(403, 'account_disabled'));
+  next();
+});
 
 const maskPhone = (p: string) => `${p.slice(0, 3)} ••••• ${p.slice(-4)}`;
 const safeName = (enc: string | null) => {

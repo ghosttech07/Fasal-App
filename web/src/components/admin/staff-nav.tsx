@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   Banknote,
   CloudRain,
+  Contact,
   KeyRound,
   LayoutDashboard,
   MapPinned,
@@ -26,6 +27,7 @@ const ITEMS = [
   { href: '/admin/fields', label: 'Land checks', icon: MapPinned, cases: true },
   { href: '/admin/rain', label: 'Rain data', icon: CloudRain },
   { href: '/admin/audit', label: 'Audit log', icon: ScrollText },
+  { href: '/admin/agents', label: 'Field agents', icon: Contact, cases: true },
   { href: '/admin/staff', label: 'Staff & roles', icon: UserCog, adminOnly: true },
   { href: '/admin/account', label: 'My account', icon: KeyRound },
 ] as const;

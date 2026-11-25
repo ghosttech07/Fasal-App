@@ -126,4 +126,5 @@ export const ml: Dict = {
   'help.how': 'ഇൻഷുറൻസ് കമ്പനിയിലോ IRDAI-ലോ എങ്ങനെ പരാതി നൽകാം',
   'help.send': 'അയയ്ക്കുക',
   'help.sending': 'അയയ്ക്കുന്നു',
+  'err.account_disabled': 'ഈ അക്കൗണ്ട് നിർത്തിവച്ചിരിക്കുന്നു. നിങ്ങളുടെ FPO-യെയോ FasalShield-നെയോ ബന്ധപ്പെടുക.',
 };

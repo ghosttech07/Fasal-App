@@ -125,4 +125,5 @@ export const gu: Dict = {
   'help.how': 'વીમા કંપની કે IRDAI ને ફરિયાદ કેવી રીતે કરવી',
   'help.send': 'મોકલો',
   'help.sending': 'મોકલી રહ્યા છીએ',
+  'err.account_disabled': 'આ ખાતું બંધ કરાયું છે. કૃપા કરી તમારા FPO કે FasalShield નો સંપર્ક કરો.',
 };

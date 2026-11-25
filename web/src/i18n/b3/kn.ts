@@ -125,4 +125,5 @@ export const kn: Dict = {
   'help.how': 'ವಿಮಾ ಕಂಪನಿ ಅಥವಾ IRDAI ಗೆ ದೂರು ನೀಡುವುದು ಹೇಗೆ',
   'help.send': 'ಕಳುಹಿಸಿ',
   'help.sending': 'ಕಳುಹಿಸುತ್ತಿದ್ದೇವೆ',
+  'err.account_disabled': 'ಈ ಖಾತೆಯನ್ನು ನಿಲ್ಲಿಸಲಾಗಿದೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ FPO ಅಥವಾ FasalShield ಅನ್ನು ಸಂಪರ್ಕಿಸಿ.',
 };

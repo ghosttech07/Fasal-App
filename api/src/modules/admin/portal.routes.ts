@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
-import { formatPaise } from '@fasalshield/shared';
+import { formatPaise, phoneE164IndiaSchema } from '@fasalshield/shared';
 import { prisma } from '../../db';
 import { env } from '../../env';
 import { payments, weather } from '../../adapters';
@@ -1393,6 +1393,92 @@ portalRouter.post('/fields/:id/check', requireStaff(...HANDLE_CASES), async (req
         entityId: plot.id,
         diff: { decision: input.decision, from: plot.verificationStatus },
       },
+      tx,
+    );
+  });
+  res.json({ ok: true });
+});
+
+// ---------- Field agents (assisted enrolment) ----------
+const READ_AGENTS: StaffRole[] = ['SYS_ADMIN', 'CLAIMS_OPS', 'REGULATOR'];
+
+/** Agents with their organisation and how many farmers they enrolled. Phones are masked. */
+portalRouter.get('/agents', requireStaff(...READ_AGENTS), async (_req, res) => {
+  const [agents, orgs] = await Promise.all([
+    prisma.agent.findMany({
+      orderBy: { agentCode: 'asc' },
+      include: { org: { select: { name: true } }, _count: { select: { farmers: true } } },
+    }),
+    prisma.organisation.findMany({ where: { type: 'FPO' }, orderBy: { name: 'asc' }, select: { id: true, name: true } }),
+  ]);
+  const covered = await prisma.farmer.groupBy({
+    by: ['onboardedByAgentId'],
+    where: { onboardedByAgentId: { not: null }, policies: { some: { status: { in: ['ACTIVE', 'IN_WAITING'] } } } },
+    _count: { _all: true },
+  });
+  const coveredBy = new Map(covered.map((c) => [c.onboardedByAgentId, c._count._all]));
+  res.json({
+    orgs,
+    agents: agents.map((a) => ({
+      id: a.id,
+      code: a.agentCode,
+      name: a.name,
+      phone: maskPhone(a.phoneE164),
+      org: a.org.name,
+      status: a.status,
+      farmers: a._count.farmers,
+      covered: coveredBy.get(a.id) ?? 0,
+    })),
+  });
+});
+
+/** Add an agent: their own mobile number (OTP sign-in), name and FPO (an existing one or a new name). */
+portalRouter.post('/agents', requireStaff('SYS_ADMIN'), async (req, res) => {
+  const input = body(
+    req,
+    z
+      .object({
+        phone: phoneE164IndiaSchema,
+        name: z.string().trim().min(2).max(80),
+        orgId: z.string().uuid().optional(),
+        newOrgName: z.string().trim().min(2).max(120).optional(),
+      })
+      .refine((v) => !!v.orgId !== !!v.newOrgName, 'Choose an FPO or name a new one'),
+  );
+  if (await prisma.agent.findUnique({ where: { phoneE164: input.phone }, select: { id: true } }))
+    throw new HttpError(409, 'agent_exists');
+  // A farmer's number cannot become an agent's: one number, one role.
+  if (await prisma.farmer.findUnique({ where: { phoneE164: input.phone }, select: { id: true } }))
+    throw new HttpError(409, 'phone_is_farmer');
+  if (input.orgId && !(await prisma.organisation.findFirst({ where: { id: input.orgId, type: 'FPO' } })))
+    throw new HttpError(422, 'org_unknown');
+
+  const agent = await prisma.$transaction(async (tx) => {
+    const orgId = input.orgId ?? (await tx.organisation.create({ data: { type: 'FPO', name: input.newOrgName! } })).id;
+    const count = await tx.agent.count();
+    const created = await tx.agent.create({
+      data: { orgId, phoneE164: input.phone, name: input.name, agentCode: `AG-${String(count + 1).padStart(4, '0')}` },
+    });
+    await audit(
+      { actorType: 'STAFF', actorId: me(req).sub, action: 'AGENT_CREATED', entityType: 'Agent', entityId: created.id, diff: { orgId, newOrg: !!input.newOrgName } },
+      tx,
+    );
+    return created;
+  });
+  res.status(201).json({ id: agent.id, code: agent.agentCode });
+});
+
+/** Disable or re-enable an agent. Disabling ends their sessions at once. */
+portalRouter.patch('/agents/:id', requireStaff('SYS_ADMIN'), async (req, res) => {
+  const { status } = body(req, z.object({ status: z.enum(['ACTIVE', 'DISABLED']) }));
+  const agent = await prisma.agent.findUnique({ where: { id: String(req.params.id) } });
+  if (!agent) throw new HttpError(404, 'not_found');
+  await prisma.$transaction(async (tx) => {
+    await tx.agent.update({ where: { id: agent.id }, data: { status } });
+    if (status === 'DISABLED')
+      await tx.refreshToken.updateMany({ where: { subjectId: agent.id, revokedAt: null }, data: { revokedAt: new Date() } });
+    await audit(
+      { actorType: 'STAFF', actorId: me(req).sub, action: status === 'DISABLED' ? 'AGENT_DISABLED' : 'AGENT_ENABLED', entityType: 'Agent', entityId: agent.id },
       tx,
     );
   });

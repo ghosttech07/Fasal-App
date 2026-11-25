@@ -125,4 +125,5 @@ export const or: Dict = {
   'help.how': 'ବୀମା କମ୍ପାନୀ ବା IRDAI କୁ କିପରି ଅଭିଯୋଗ କରିବେ',
   'help.send': 'ପଠାନ୍ତୁ',
   'help.sending': 'ପଠାଯାଉଛି',
+  'err.account_disabled': 'ଏହି ଖାତା ବନ୍ଦ କରାଯାଇଛି। ଦୟାକରି ଆପଣଙ୍କ FPO ବା FasalShield ସହ ଯୋଗାଯୋଗ କରନ୍ତୁ।',
 };

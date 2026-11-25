@@ -44,6 +44,9 @@ const MESSAGES: Record<string, string> = {
   staff_session_required: 'Your session ended. Sign in again.',
   network: 'No connection. Check your internet and try again.',
   validation_failed: 'Please check what you entered.',
+  agent_exists: 'An agent with this mobile number already exists.',
+  phone_is_farmer: 'This number belongs to a farmer. One number can have only one role.',
+  org_unknown: 'That FPO was not found. Refresh the page.',
 };
 const say = (e: unknown) =>
   MESSAGES[(e as Error)?.message] ?? 'Something went wrong. Try again in a minute.';
@@ -901,5 +904,166 @@ export function CheckField({ id }: { id: string }) {
         </button>
       </div>
     </div>
+  );
+}
+
+// ---------- Field agents ----------
+
+/** Add a field agent: their own mobile number (they sign in by OTP), name, and FPO. */
+export function AddAgent({ orgs }: { orgs: { id: string; name: string }[] }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [name, setName] = useState('');
+  const [orgId, setOrgId] = useState(orgs[0]?.id ?? 'new');
+  const [newOrg, setNewOrg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!/^[6-9]\d{9}$/.test(phone)) return setErr('Enter a 10-digit mobile number.');
+    if (name.trim().length < 2) return setErr('Enter the agent’s name.');
+    if (orgId === 'new' && newOrg.trim().length < 2) return setErr('Name the FPO.');
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await adminCall<{ code: string }>('POST', 'agents', {
+        phone,
+        name: name.trim(),
+        ...(orgId === 'new' ? { newOrgName: newOrg.trim() } : { orgId }),
+      });
+      setDone(`${name.trim()} added as ${r.code}. They sign in on the app with ${phone}.`);
+      setPhone('');
+      setName('');
+      setNewOrg('');
+      setOpen(false);
+      router.refresh();
+    } catch (e2) {
+      setErr(say(e2));
+    } finally {
+      setBusy(false);
+    }
+  }
+  const field = {
+    font: 'inherit',
+    padding: '8px 10px',
+    borderRadius: 8,
+    border: '1px solid #c9d2cb',
+    minWidth: 0,
+  } as const;
+  return (
+    <div style={{ display: 'grid', gap: 8 }}>
+      {done ? (
+        <p role="status" className="adm-note" style={{ margin: 0 }}>
+          {done}
+        </p>
+      ) : null}
+      {open ? (
+        <form
+          onSubmit={save}
+          className="adm-card"
+          style={{ display: 'grid', gap: 10, padding: 16 }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gap: 10,
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            }}
+          >
+            <label style={{ display: 'grid', gap: 4 }}>
+              Mobile number
+              <input
+                style={field}
+                inputMode="numeric"
+                maxLength={10}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                placeholder="10 digits"
+              />
+            </label>
+            <label style={{ display: 'grid', gap: 4 }}>
+              Name
+              <input
+                style={field}
+                value={name}
+                maxLength={80}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+            <label style={{ display: 'grid', gap: 4 }}>
+              FPO
+              <select style={field} value={orgId} onChange={(e) => setOrgId(e.target.value)}>
+                {orgs.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
+                <option value="new">+ New FPO</option>
+              </select>
+            </label>
+            {orgId === 'new' ? (
+              <label style={{ display: 'grid', gap: 4 }}>
+                New FPO name
+                <input
+                  style={field}
+                  value={newOrg}
+                  maxLength={120}
+                  onChange={(e) => setNewOrg(e.target.value)}
+                />
+              </label>
+            ) : null}
+          </div>
+          {err ? (
+            <span role="alert" style={{ color: '#b42318', fontSize: 14 }}>
+              {err}
+            </span>
+          ) : null}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="adm-btn" type="submit" disabled={busy}>
+              {busy ? 'Adding…' : 'Add agent'}
+            </button>
+            <button className="adm-btn line" type="button" onClick={() => setOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div>
+          <button className="adm-btn" type="button" onClick={() => setOpen(true)}>
+            Add a field agent
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Disable (ends their sessions at once) or re-enable an agent. */
+export function AgentToggle({ id, status, name }: { id: string; status: string; name: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const off = status === 'ACTIVE';
+  return (
+    <button
+      className={`adm-btn${off ? ' line' : ''}`}
+      disabled={busy}
+      onClick={async () => {
+        if (off && !confirm(`Disable ${name}? They are signed out at once and cannot sign in.`))
+          return;
+        setBusy(true);
+        try {
+          await adminCall('PATCH', `agents/${id}`, { status: off ? 'DISABLED' : 'ACTIVE' });
+          router.refresh();
+        } catch (e) {
+          alert(say(e));
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      {off ? 'Disable' : 'Enable'}
+    </button>
   );
 }

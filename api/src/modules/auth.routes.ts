@@ -70,6 +70,7 @@ authRouter.post('/otp/verify', otpLimiter, async (req, res) => {
 
   const agent = await prisma.agent.findUnique({ where: { phoneE164: request.phoneE164 } });
   if (agent) {
+    if (agent.status !== 'ACTIVE') throw new HttpError(403, 'account_disabled'); // disabled by an admin
     await audit({ actorType: 'AGENT', actorId: agent.id, action: 'LOGIN', entityType: 'Agent', entityId: agent.id });
     res.json({ ...(await issueTokens(agent.id, 'AGENT', input.deviceId)), user: { id: agent.id, role: 'AGENT', isNew: false } });
     return;
@@ -96,6 +97,10 @@ authRouter.post('/refresh', async (req, res) => {
   if (stored.revokedAt) {
     await prisma.refreshToken.updateMany({ where: { familyId: stored.familyId }, data: { revokedAt: new Date() } });
     throw new HttpError(401, 'refresh_reused');
+  }
+  if (stored.role === 'AGENT') {
+    const agent = await prisma.agent.findUnique({ where: { id: stored.subjectId }, select: { status: true } });
+    if (agent?.status !== 'ACTIVE') throw new HttpError(401, 'refresh_invalid');
   }
   await prisma.refreshToken.update({ where: { id: stored.id }, data: { revokedAt: new Date() } });
   res.json(await issueTokens(stored.subjectId, stored.role, stored.deviceId ?? undefined, stored.familyId));

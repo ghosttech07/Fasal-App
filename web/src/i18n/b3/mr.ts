@@ -125,4 +125,5 @@ export const mr: Dict = {
   'help.how': 'विमा कंपनी किंवा IRDAI कडे तक्रार कशी करावी',
   'help.send': 'पाठवा',
   'help.sending': 'पाठवत आहोत',
+  'err.account_disabled': 'हे खाते बंद केले आहे. कृपया तुमच्या FPO किंवा FasalShield शी संपर्क साधा.',
 };

@@ -125,4 +125,5 @@ export const pa: Dict = {
   'help.how': 'ਬੀਮਾ ਕੰਪਨੀ ਜਾਂ IRDAI ਨੂੰ ਸ਼ਿਕਾਇਤ ਕਿਵੇਂ ਕਰੀਏ',
   'help.send': 'ਭੇਜੋ',
   'help.sending': 'ਭੇਜ ਰਹੇ ਹਾਂ',
+  'err.account_disabled': 'ਇਹ ਖਾਤਾ ਬੰਦ ਕਰ ਦਿੱਤਾ ਗਿਆ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ FPO ਜਾਂ FasalShield ਨਾਲ ਸੰਪਰਕ ਕਰੋ।',
 };

@@ -124,4 +124,5 @@ export const te: Dict = {
   'help.how': 'బీమా సంస్థకు లేదా IRDAIకి ఎలా ఫిర్యాదు చేయాలి',
   'help.send': 'పంపండి',
   'help.sending': 'పంపుతున్నాము',
+  'err.account_disabled': 'ఈ ఖాతా ఆపివేయబడింది. దయచేసి మీ FPO లేదా FasalShield ను సంప్రదించండి.',
 };

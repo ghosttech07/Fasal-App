@@ -47,6 +47,7 @@ const KNOWN = new Set([
   'payment_failed',
   'role_not_supported',
   'too_many_open_grievances',
+  'account_disabled',
 ]);
 export function messageFor(e: unknown, t: (key: Key) => string): string {
   const code =

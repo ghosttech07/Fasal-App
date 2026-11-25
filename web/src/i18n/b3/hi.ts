@@ -125,4 +125,5 @@ export const hi: Dict = {
   'help.how': 'बीमा कंपनी या IRDAI से शिकायत कैसे करें',
   'help.send': 'भेजें',
   'help.sending': 'भेज रहे हैं',
+  'err.account_disabled': 'यह खाता बंद कर दिया गया है। कृपया अपने FPO या FasalShield से संपर्क करें।',
 };

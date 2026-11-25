@@ -125,4 +125,6 @@ export const as: Dict = {
   'help.how': 'বীমা কোম্পানী বা IRDAIক কেনেকৈ অভিযোগ দিব',
   'help.send': 'পঠাওক',
   'help.sending': 'পঠোৱা হৈছে',
+  'err.account_disabled':
+    'এই একাউণ্ট বন্ধ কৰা হৈছে। অনুগ্ৰহ কৰি আপোনাৰ FPO বা FasalShieldৰ সৈতে যোগাযোগ কৰক।',
 };
