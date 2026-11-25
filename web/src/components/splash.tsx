@@ -20,7 +20,7 @@ export function Splash() {
   useEffect(() => {
     const el = ref.current;
     if (!el || getComputedStyle(el).display === 'none') return setGone(true);
-    const t = setTimeout(leave, 1900);
+    const t = setTimeout(leave, 4200);
     return () => clearTimeout(t);
   }, []);
 
@@ -41,7 +41,7 @@ export function Splash() {
       el.classList.add('nomark');
     }
     el.classList.add('out');
-    setTimeout(() => setGone(true), reduce ? 260 : 620);
+    setTimeout(() => setGone(true), reduce ? 260 : 820);
   }
 
   if (gone) return null;

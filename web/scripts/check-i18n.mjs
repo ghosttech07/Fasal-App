@@ -44,4 +44,23 @@ for (const lang of langs) {
     }
 }
 console.log(`${langs.length} languages × ${en.size} strings checked, ${problems} problem(s)`);
+
+// Legal pages: each translation has the same headings and paragraphs as English and keeps every
+// [BRACKETED] item, so filling in the insurer's details later reaches every language.
+const legalDir = fileURLToPath(new URL('../src/legal/', import.meta.url));
+const shape = (file) => {
+  const t = readFileSync(join(legalDir, file), 'utf8');
+  const lines = (n) => t.match(new RegExp(`^ {${n}}'`, 'gm'))?.length ?? 0;
+  const bracketed = [...t.matchAll(/\[[A-Z][A-Z .\/]+\]/g)].map((m) => m[0]).sort().join('|');
+  return `${lines(10)} headings, ${lines(12)} paragraphs, ${bracketed}`;
+};
+const legalEn = shape('en.ts');
+for (const lang of langs) {
+  const s = shape(`${lang}.ts`);
+  if (s !== legalEn) {
+    problems++;
+    console.log(`legal ${lang}: ${s}\n   English: ${legalEn}`);
+  }
+}
+console.log(`legal pages: ${langs.length} languages checked against English`);
 process.exit(problems ? 1 : 0);

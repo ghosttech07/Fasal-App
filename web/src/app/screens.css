@@ -573,7 +573,7 @@ html[data-splash='skip'] .splash {
   position: absolute;
   inset: 0;
   background: #fff;
-  transition: opacity 300ms var(--ease-out) 150ms;
+  transition: opacity 400ms var(--ease-out) 250ms;
 }
 .splash .stage {
   position: relative;
@@ -585,8 +585,8 @@ html[data-splash='skip'] .splash {
 }
 .splash .art {
   position: relative;
-  width: 136px;
-  height: 136px;
+  width: min(200px, 52vw);
+  height: min(200px, 52vw);
 }
 .spl {
   position: absolute;
@@ -604,59 +604,60 @@ html[data-splash='skip'] .splash {
   stroke-linejoin: round;
 }
 .spl-cloud {
-  animation: spl-drop 420ms var(--ease-out) 0ms both;
+  animation: spl-drop 700ms var(--ease-out) 0ms both;
 }
 .spl-ground {
   transform-origin: 50% 86.7%;
-  animation: spl-widen 420ms var(--ease-out) 120ms both;
+  animation: spl-widen 700ms var(--ease-out) 250ms both;
 }
 .spl-stem {
   transform-origin: 50% 85%;
-  animation: spl-rise 380ms var(--ease-out) 420ms both;
+  animation: spl-rise 700ms var(--ease-out) 800ms both;
 }
 .spl-leaf-l {
   transform-origin: 50% 74.2%;
   --r: 24deg;
-  animation: spl-unfurl 480ms var(--ease-out) 640ms both;
+  animation: spl-unfurl 750ms var(--ease-out) 1250ms both;
 }
 .spl-leaf-r {
   transform-origin: 50% 67.5%;
   --r: -24deg;
-  animation: spl-unfurl 480ms var(--ease-out) 720ms both;
+  animation: spl-unfurl 750ms var(--ease-out) 1400ms both;
 }
 .spl-rain {
   opacity: 0;
-  animation: spl-fall 600ms linear 2;
+  /* Rain keeps falling until the app opens. */
+  animation: spl-fall 1000ms linear infinite;
 }
 .spl-rain-0 {
-  animation-delay: 300ms;
+  animation-delay: 400ms;
 }
 .spl-rain-1 {
-  animation-delay: 480ms;
+  animation-delay: 750ms;
 }
 .spl-rain-2 {
-  animation-delay: 380ms;
+  animation-delay: 550ms;
 }
 .spl-rain-3 {
-  animation-delay: 560ms;
+  animation-delay: 900ms;
 }
 .spl-ripple {
   opacity: 0;
-  animation: spl-ripple 420ms var(--ease-out) both;
+  animation: spl-ripple 1000ms var(--ease-out) infinite;
 }
 .spl-ripple-0 {
   transform-origin: 33.3% 84.2%;
-  animation-delay: 840ms;
+  animation-delay: 1300ms;
 }
 .spl-ripple-1 {
   transform-origin: 64.2% 84.6%;
-  animation-delay: 1100ms;
+  animation-delay: 1800ms;
 }
 .spl-gold {
   transform-origin: 50% 61%;
   animation:
-    spl-goldfall 380ms linear 760ms both,
-    spl-squash 300ms var(--ease-out) 1140ms both;
+    spl-goldfall 600ms linear 1700ms both,
+    spl-squash 450ms var(--ease-out) 2300ms;
 }
 .splash .fly {
   position: relative;
@@ -669,10 +670,10 @@ html[data-splash='skip'] .splash {
   gap: 0.3em;
   font-family: var(--fig);
   font-weight: 600;
-  font-size: 30px;
+  font-size: 34px;
   line-height: 1;
   color: var(--board);
-  animation: sp-rise 500ms var(--ease-out) 1050ms both;
+  animation: sp-rise 700ms var(--ease-out) 2300ms both;
 }
 .splash .word svg {
   height: 0.8em;
@@ -682,7 +683,7 @@ html[data-splash='skip'] .splash {
   font-size: 15px;
   color: var(--ink-2);
   max-width: 22ch;
-  animation: sp-rise 500ms var(--ease-out) 1130ms both;
+  animation: sp-rise 700ms var(--ease-out) 2500ms both;
 }
 .splash .skip {
   position: absolute;
@@ -692,7 +693,7 @@ html[data-splash='skip'] .splash {
   text-align: center;
   font-size: 13px;
   color: #6b756f;
-  animation: sp-fade 300ms ease-out 900ms both;
+  animation: sp-fade 400ms ease-out 1500ms both;
 }
 .splash.out {
   pointer-events: none;
@@ -706,12 +707,12 @@ html[data-splash='skip'] .splash {
   opacity: 0;
   transform: translateY(-6px) scale(0.97);
   transition:
-    opacity 180ms var(--ease-out),
-    transform 180ms var(--ease-out);
+    opacity 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
 }
 .splash.out .fly {
   transform: translate(var(--fx, 0), var(--fy, 0)) scale(var(--fs, 1));
-  transition: transform 450ms var(--ease-in-out);
+  transition: transform 600ms var(--ease-in-out);
 }
 .splash.out .word {
   color: #fff;
@@ -774,8 +775,11 @@ html[data-splash='skip'] .splash {
 }
 @keyframes spl-goldfall {
   from {
-    opacity: 1;
+    opacity: 0;
     transform: translateY(-66px);
+  }
+  20% {
+    opacity: 1;
   }
   to {
     opacity: 1;
@@ -1667,6 +1671,12 @@ a.acc-row {
   line-height: 1.6;
   color: var(--ink);
 }
+.legal .legal-note {
+  font-size: 14px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--paper-2, #f1efe8);
+}
 .legal-nav {
   display: flex;
   flex-wrap: wrap;
@@ -1855,6 +1865,24 @@ a.acc-row {
 }
 
 /* Field agent: per-farmer progress chips */
-.ag-steps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-.ag-step { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 2px 8px; border-radius: 6px; background: #eceff1; color: #4b5751; }
-.ag-step.ok { background: var(--ok-bg); color: var(--board); font-weight: 600; }
+.ag-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.ag-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eceff1;
+  color: #4b5751;
+}
+.ag-step.ok {
+  background: var(--ok-bg);
+  color: var(--board);
+  font-weight: 600;
+}
