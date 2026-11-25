@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { PayButton } from '@/components/pay-button';
 import { StepBoard } from '@/components/step-board';
-import { day, en, rupees, type Me, type Policy } from '@/lib/format';
+import { day, rupees, type Me, type Policy } from '@/lib/format';
+import { getT } from '@/i18n/server';
 import { serverGet } from '@/lib/server-api';
 import { Money } from '@/components/money';
 
@@ -11,32 +12,37 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
   if (p.status !== 'PENDING_PAYMENT') redirect(`/cover/done/${id}`);
   const net = p.premiumPaise - p.subsidyPaise;
   const end = p.phasePlan.at(-1)?.to;
+  const { t } = await getT();
 
   return (
     <main className="screen">
       <StepBoard
-        back={{ href: '/cover/crop', label: 'Covers' }}
-        title={<span className="sr-only">Pay premium</span>}
+        back={{ href: '/cover/crop', label: t('c.covers') }}
+        title={<span className="sr-only">{t('pay.title')}</span>}
       >
         <p className="board-sub" style={{ marginTop: -12 }}>
-          You pay today
+          {t('pay.today')}
         </p>
         <div className="big-gold">
           <Money paise={net} />
         </div>
         <p className="board-sub">
-          {en(p.names)} for {p.cropCode.toLowerCase()}, up to {rupees(p.sumInsuredPaise)}
+          {t('pay.for', {
+            cover: t(`prod.${p.peril}` as never),
+            crop: t(`crop.${p.cropCode}` as never),
+            amt: rupees(p.sumInsuredPaise),
+          })}
         </p>
       </StepBoard>
       <div className="work">
         <div className="ruled">
           <div>
-            <span className="k">Full premium</span>
+            <span className="k">{t('pay.full')}</span>
             <span className="v">{rupees(p.premiumPaise)}</span>
           </div>
           {p.subsidyPaise > 0 ? (
             <div>
-              <span className="k">Sponsor share</span>
+              <span className="k">{t('pay.sponsor')}</span>
               <span className="v" style={{ color: 'var(--board)' }}>
                 − {rupees(p.subsidyPaise)}
               </span>
@@ -44,7 +50,7 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
           ) : null}
           <div>
             <span className="k" style={{ color: 'var(--ink)', fontWeight: 600 }}>
-              You pay
+              {t('choose.youPay')}
             </span>
             <span className="v" style={{ fontSize: 24 }}>
               {rupees(net)}
@@ -53,22 +59,25 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
         </div>
         <div className="ruled" style={{ borderTop: 0 }}>
           <div>
-            <span className="k">Pay from</span>
+            <span className="k">{t('pay.from')}</span>
             <span style={{ fontWeight: 500 }}>{me.wallet?.handleMasked}</span>
           </div>
           {end ? (
             <div>
-              <span className="k">Cover runs</span>
-              <span style={{ fontWeight: 500 }}>Today to {day(end, true)}</span>
+              <span className="k">{t('pay.runs')}</span>
+              <span style={{ fontWeight: 500 }}>{t('pay.todayTo', { date: day(end, true) })}</span>
             </div>
           ) : null}
         </div>
-        <p className="small">
-          The premium goes to the insurer. FasalShield never holds your money.
-        </p>
+        <p className="small">{t('pay.insurer')}</p>
       </div>
       <div className="action">
-        <PayButton id={id} label={`Pay ${rupees(net)} with UPI`} />
+        <PayButton
+          id={id}
+          label={t('pay.btn', { amt: rupees(net) })}
+          waiting={t('pay.waiting')}
+          opens={t('pay.opens')}
+        />
       </div>
     </main>
   );

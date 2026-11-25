@@ -6,7 +6,9 @@ import { Suspense, useEffect, useState } from 'react';
 import { FormError } from '@/components/form-error';
 import { StepBoard } from '@/components/step-board';
 import { messageFor, post } from '@/lib/client';
-import { en, phaseName, rupees } from '@/lib/format';
+import { phaseName, rupees } from '@/lib/format';
+import { useT } from '@/i18n/client';
+import type { Key } from '@/i18n';
 
 type Quote = {
   productVersionId: string;
@@ -21,14 +23,15 @@ type Quote = {
   examplePayouts: { threshold: number; unit: string; amountPaise: number; phaseId: string }[];
 };
 
-function rule(e: Quote['examplePayouts'][number]) {
-  if (e.unit === 'PCT_BELOW_NORMAL') return `Rain ${e.threshold}% below normal`;
+function rule(e: Quote['examplePayouts'][number], t: ReturnType<typeof useT>['t']) {
+  if (e.unit === 'PCT_BELOW_NORMAL') return t('choose.rainBelow', { pct: e.threshold });
   const days = /MM_IN_(\d+)_DAYS/.exec(e.unit)?.[1] ?? '3';
-  return `${e.threshold} mm in ${days} days`;
+  return t('choose.mmDays', { mm: e.threshold, n: days });
 }
 
 function Choose() {
   const router = useRouter();
+  const { t } = useT();
   const q = useSearchParams();
   const [quotes, setQuotes] = useState<Quote[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -69,16 +72,14 @@ function Choose() {
   return (
     <main className="screen">
       <StepBoard
-        back={{ href: '/cover/crop', label: 'Crop' }}
-        title="Choose your cover"
-        sub={`${crop.charAt(0) + crop.slice(1).toLowerCase()}${acres ? ` · ${acres.toFixed(1)} acres` : ''}`}
+        back={{ href: '/cover/crop', label: t('c.crop') }}
+        title={t('choose.title')}
+        sub={`${t(`crop.${crop}` as Key)}${acres ? ` · ${acres.toFixed(1)} ${t('field.acres')}` : ''}`}
       />
       <div className="work" style={{ gap: 12 }}>
         {error ? <FormError>{error}</FormError> : null}
-        {quotes === null && !error ? <p className="small">Loading covers for your field</p> : null}
-        {quotes?.length === 0 ? (
-          <p className="small">No cover is open for this crop in your district right now.</p>
-        ) : null}
+        {quotes === null && !error ? <p className="small">{t('choose.loading')}</p> : null}
+        {quotes?.length === 0 ? <p className="small">{t('choose.none')}</p> : null}
         {quotes?.map((v) => (
           <article
             className="cover"
@@ -92,17 +93,21 @@ function Choose() {
                 ) : (
                   <CloudRain size={22} aria-hidden="true" color="#8fb0ff" />
                 )}
-                {en(v.names)}
+                {t(`prod.${v.peril}`)}
               </h2>
               <span style={{ fontSize: 14, color: 'var(--chalk-2)' }}>
                 {v.examplePayouts[0]
-                  ? `${phaseName(v.examplePayouts[0].phaseId)}: if this happens, you get`
+                  ? t('choose.ifThis', {
+                      phase:
+                        t(`phase.${v.examplePayouts[0].phaseId}` as Key) ||
+                        phaseName(v.examplePayouts[0].phaseId),
+                    })
                   : null}
               </span>
               <div className="rates-d">
                 {v.examplePayouts.map((e) => (
                   <div key={e.threshold}>
-                    <span>{rule(e)}</span>
+                    <span>{rule(e, t)}</span>
                     <b>{rupees(e.amountPaise)}</b>
                   </div>
                 ))}
@@ -110,15 +115,15 @@ function Choose() {
             </div>
             <div className="foot">
               <div>
-                <div className="sub">You pay</div>
+                <div className="sub">{t('choose.youPay')}</div>
                 <div className="pay fig">{rupees(v.netPaise)}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 {v.subsidyPaise > 0 ? (
-                  <div className="sub">Sponsor pays {rupees(v.subsidyPaise)}</div>
+                  <div className="sub">{t('choose.sponsor', { amt: rupees(v.subsidyPaise) })}</div>
                 ) : null}
                 <div className="sub">
-                  Cover up to{' '}
+                  {t('choose.upTo')}{' '}
                   <b className="fig" style={{ color: 'var(--ink)', fontSize: 17 }}>
                     {rupees(v.sumInsuredPaise)}
                   </b>
@@ -129,7 +134,7 @@ function Choose() {
               {busy === v.productVersionId ? (
                 <LoaderCircle className="spin" size={20} aria-hidden="true" />
               ) : null}
-              Choose {en(v.names)}
+              {t('choose.choose', { name: t(`prod.${v.peril}`) })}
             </button>
           </article>
         ))}

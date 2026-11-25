@@ -1,5 +1,6 @@
 import { applyBasisPoints } from '@fasalshield/shared';
 import { num1, rupees, type PhaseStatus, type Slab } from '@/lib/format';
+import type { T } from '@/i18n';
 
 /**
  * The signature: today's rain reading against the posted payout marks, each mark labelled with its rupees.
@@ -11,22 +12,24 @@ export function RainMeter({
   phaseAmountPaise,
   flood,
   rollingDays,
+  t,
 }: {
   phase: PhaseStatus;
   slabs: Slab[];
   phaseAmountPaise: number;
   flood: boolean;
   rollingDays: number;
+  t: T;
 }) {
   if (phase.indexValue === null) {
     return (
       <div className="meter">
         <div className="read">
           <span className="big fig" style={{ fontSize: 30 }}>
-            Waiting for rain data
+            {t('meter.wait')}
           </span>
         </div>
-        <p className="board-sub">Satellite readings for your field arrive within a day.</p>
+        <p className="board-sub">{t('meter.waitSub')}</p>
       </div>
     );
   }
@@ -35,8 +38,8 @@ export function RainMeter({
   const pos = (v: number) => `${Math.min(100, (v / top) * 100)}%`;
   const passed = (t: number) => index >= t;
   const summary = flood
-    ? `Heaviest ${rollingDays}-day rain is ${num1(index)} mm.`
-    : `Rain is ${num1(index)}% below normal.`;
+    ? `${num1(index)} mm, ${t('meter.heaviest', { n: rollingDays })}.`
+    : `${num1(index)}%, ${t('meter.less')}.`;
   const marks = slabs
     .map(
       (s) =>
@@ -45,15 +48,11 @@ export function RainMeter({
     .join('; ');
 
   return (
-    <div
-      className={`meter${flood ? ' flood' : ''}`}
-      role="img"
-      aria-label={`${summary} Payout marks: ${marks}.`}
-    >
+    <div className={`meter${flood ? ' flood' : ''}`} role="img" aria-label={`${summary} ${marks}.`}>
       <div className="read">
         <span className="big fig">{flood ? `${num1(index)} mm` : `${num1(index)}%`}</span>
         <span className="unit">
-          {flood ? `heaviest rain in ${rollingDays} days` : 'less rain than normal'}
+          {flood ? t('meter.heaviest', { n: rollingDays }) : t('meter.less')}
         </span>
       </div>
       <div className="track" aria-hidden="true">
@@ -76,8 +75,8 @@ export function RainMeter({
       </div>
       <p className="board-sub" style={{ fontSize: 15 }}>
         {flood
-          ? `${num1(phase.observedMm)} mm fell so far this season`
-          : `${num1(phase.observedMm)} mm fell · normal by now is ${num1(phase.normalMm)} mm`}
+          ? t('meter.fellSeason', { mm: num1(phase.observedMm) })
+          : t('meter.fellNormal', { mm: num1(phase.observedMm), normal: num1(phase.normalMm) })}
       </p>
     </div>
   );

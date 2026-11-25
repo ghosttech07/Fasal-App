@@ -6,7 +6,17 @@ import { useState } from 'react';
 import { messageFor, post } from '@/lib/client';
 import { FormError } from './form-error';
 
-export function PayButton({ id, label }: { id: string; label: string }) {
+export function PayButton({
+  id,
+  label,
+  waiting,
+  opens,
+}: {
+  id: string;
+  label: string;
+  waiting: string;
+  opens: string;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,10 +44,10 @@ export function PayButton({ id, label }: { id: string; label: string }) {
         ) : (
           <Landmark size={22} aria-hidden="true" />
         )}
-        {busy ? 'Waiting for your UPI app' : label}
+        {busy ? waiting : label}
       </button>
       <p className="hint" style={{ textAlign: 'center', fontSize: 14 }}>
-        Your UPI app opens to confirm
+        {opens}
       </p>
     </>
   );

@@ -1790,9 +1790,44 @@ a.acc-row {
 }
 
 /* Language picker: each language in its own script, big tap targets */
-.lang-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.lang-btn { min-height: 64px; display: grid; align-content: center; gap: 2px; padding: 8px 14px; text-align: left; background: var(--surface); color: var(--ink); border: 1.5px solid var(--rule); border-radius: 10px; font: inherit; cursor: pointer; }
-.lang-btn b { font-size: 20px; font-weight: 600; line-height: 1.25; }
-.lang-btn small { font-size: 13px; color: var(--ink-2); }
-.lang-btn[data-on='true'] { border-color: var(--board); box-shadow: inset 0 0 0 1px var(--board); }
-.lang-btn:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; }
+.lang-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.lang-btn {
+  min-height: 64px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  padding: 8px 14px;
+  text-align: left;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1.5px solid var(--rule);
+  border-radius: 10px;
+  font: inherit;
+  cursor: pointer;
+}
+.lang-btn b {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.lang-btn small {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.lang-btn[data-on='true'] {
+  border-color: var(--board);
+  box-shadow: inset 0 0 0 1px var(--board);
+}
+.lang-btn:focus-visible {
+  outline: 3px solid var(--marigold);
+  outline-offset: 2px;
+}
+
+/* Account: change language */
+.lang-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; color: var(--ink); font-size: 17px; }
+.lang-row span { flex: 1; }
+.lang-row select { font: inherit; font-size: 17px; padding: 8px 10px; border: 1.5px solid var(--field); border-radius: 8px; background: var(--surface); color: var(--ink); min-height: 44px; }

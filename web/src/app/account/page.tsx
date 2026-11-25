@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { SignOut } from '@/components/sign-out';
+import { LanguageSelect } from '@/components/language-select';
 import { StepBoard } from '@/components/step-board';
 import { day, en, num1, phaseName, rupees, type Me, type Policy } from '@/lib/format';
 import { serverGet } from '@/lib/server-api';
@@ -347,6 +348,8 @@ export default async function AccountPage() {
             />
           </div>
         </section>
+
+        <LanguageSelect />
 
         <div style={{ display: 'grid', gap: 4, justifyItems: 'center', paddingTop: 4 }}>
           <SignOut />

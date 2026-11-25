@@ -13,6 +13,8 @@ import {
   type Policy,
 } from '@/lib/format';
 import { serverGet } from '@/lib/server-api';
+import { getT } from '@/i18n/server';
+import type { Key } from '@/i18n';
 
 export default async function PolicyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,18 +24,20 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
   const last = p.phasePlan.at(-1)!;
   const total = daysBetween(first.from, last.to);
   const today = todayIso();
+  const { t } = await getT();
+  const ph = (id: string) => t(`phase.${id}` as Key) || phaseName(id);
   const todayPct = Math.min(100, Math.max(0, ((daysBetween(first.from, today) - 1) / total) * 100));
 
   return (
     <main className="screen">
       <StepBoard
-        back={{ href: '/', label: 'Home' }}
-        title={`${en(p.names)}, ${p.cropCode.toLowerCase()}`}
+        back={{ href: '/', label: t('c.home') }}
+        title={`${t(`prod.${p.peril}` as Key)}, ${t(`crop.${p.cropCode}` as Key)}`}
       >
         <div
           className="tl"
           role="img"
-          aria-label={`Season timeline from ${day(first.from)} to ${day(last.to)}. ${p.phasePlan.map((x) => `${phaseName(x.id)} ${daysBetween(x.from, x.to)} days`).join(', ')}.`}
+          aria-label={`Season timeline from ${day(first.from)} to ${day(last.to)}. ${p.phasePlan.map((x) => `${ph(x.id)} ${daysBetween(x.from, x.to)} days`).join(', ')}.`}
         >
           <div className="bar">
             {p.phasePlan.map((x) => (
@@ -55,7 +59,7 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
         <p className="board-sub fig" style={{ fontSize: 15 }}>
-          Policy {p.policyNumber} · cover {rupees(p.sumInsuredPaise)}
+          {t('pol.policy', { no: p.policyNumber ?? '', amt: rupees(p.sumInsuredPaise) })}
         </p>
       </StepBoard>
 
@@ -68,15 +72,18 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
           const passed = s?.triggeredLevel ?? 0;
           let line: string;
           if (!s || s.state === 'UPCOMING')
-            line = `Starts in ${daysBetween(today, x.from) - 1} days · up to ${rupees(x.amountPaise)}`;
-          else if (s.indexValue === null) line = 'Waiting for rain data';
+            line = t('pol.startsIn', {
+              n: daysBetween(today, x.from) - 1,
+              amt: rupees(x.amountPaise),
+            });
+          else if (s.indexValue === null) line = t('meter.wait');
           else
-            line = `${flood ? `${num1(s.indexValue)} mm in ${p.rollingDays} days` : `${num1(s.indexValue)}% less rain`}${passed ? ` · ${passed} mark${passed > 1 ? 's' : ''} passed` : ''}`;
+            line = `${flood ? t('choose.mmDays', { mm: num1(s.indexValue), n: p.rollingDays ?? 3 }) : t('pol.lessRain', { pct: num1(s.indexValue) })}${passed ? ` · ${passed > 1 ? t('pol.marks', { n: passed }) : t('pol.mark1')}` : ''}`;
           const next = p.slabs.find((sl) => sl.level > passed);
           return (
             <div className="phase" key={x.id}>
               <div className="t">
-                {phaseName(x.id)}
+                {ph(x.id)}
                 <span>
                   {day(x.from)} – {day(x.to)}
                 </span>
@@ -87,9 +94,14 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
               </div>
               {s && s.state === 'IN_PROGRESS' && next ? (
                 <span className="small">
-                  Next payout at {next.threshold}
-                  {flood ? ' mm' : '% below normal'}:{' '}
-                  {rupees(applyBasisPoints(x.amountPaise, Math.round(next.payoutPctOfPhase * 100)))}
+                  {t('pol.next', {
+                    mark: flood
+                      ? `${next.threshold} mm`
+                      : t('pol.belowNormal', { pct: next.threshold }),
+                    amt: rupees(
+                      applyBasisPoints(x.amountPaise, Math.round(next.payoutPctOfPhase * 100)),
+                    ),
+                  })}
                 </span>
               ) : null}
             </div>
@@ -98,13 +110,9 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
 
         <div style={{ display: 'grid', gap: 8, paddingTop: 16 }}>
           <h2 className="h2" style={{ fontSize: 21 }}>
-            Payouts
+            {t('pol.payouts')}
           </h2>
-          {p.triggerEvents.length === 0 ? (
-            <p className="small">
-              No payout yet. If rain crosses a mark, it shows here the same day.
-            </p>
-          ) : null}
+          {p.triggerEvents.length === 0 ? <p className="small">{t('pol.none')}</p> : null}
           {p.triggerEvents.map((e) => (
             <div className="money quiet" key={e.id}>
               <div style={{ display: 'grid', gap: 4, flex: 1 }}>
@@ -123,13 +131,17 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
                     ) : (
                       <Clock size={14} aria-hidden="true" />
                     )}
-                    {PAYOUT_WORDS[e.payoutStatus ?? ''] ?? 'Processing'}
+                    {PAYOUT_WORDS[e.payoutStatus ?? '']
+                      ? t(`pw.${e.payoutStatus}` as Key)
+                      : t('pw.other')}
                   </span>
                 </div>
                 <span className="s">
-                  {phaseName(e.phaseId)} ·{' '}
-                  {flood ? `${num1(e.indexValue)} mm` : `${num1(e.indexValue)}% below normal`} ·
-                  checked {day(e.detectedAt)} by satellite
+                  {ph(e.phaseId)} ·{' '}
+                  {flood
+                    ? `${num1(e.indexValue)} mm`
+                    : t('pol.belowNormal', { pct: num1(e.indexValue) })}{' '}
+                  · {t('pol.checked', { date: day(e.detectedAt) })}
                 </span>
               </div>
             </div>
@@ -145,7 +157,7 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
               alignItems: 'center',
             }}
           >
-            Crop damaged but no money came? Tell us
+            {t('pol.help')}
           </a>
         </div>
       </div>

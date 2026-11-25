@@ -25,6 +25,8 @@ import {
 } from '@/lib/format';
 import { serverGet } from '@/lib/server-api';
 import { Money } from '@/components/money';
+import { getT } from '@/i18n/server';
+import type { T } from '@/i18n';
 
 type Plot = { id: string; areaAcres: number | null; createdAt: string };
 type Season = { code: string; namesI18n: unknown };
@@ -39,55 +41,72 @@ export default async function Home() {
     serverGet<Plot[]>('/me/plots'),
     serverGet<Season[]>('/catalog/seasons'),
   ]);
+  const { t, lang } = await getT();
   const live = policies.filter((p) => p.status === 'ACTIVE' || p.status === 'IN_WAITING');
   return live.length ? (
-    <RainBoard me={me} policies={live} />
+    <RainBoard me={me} policies={live} t={t} />
   ) : (
-    <BeforeBuying me={me} plot={plots[0]} season={seasons[0]} />
+    <BeforeBuying me={me} plot={plots[0]} season={seasons[0]} t={t} lang={lang} />
   );
 }
 
-function BeforeBuying({ me, plot, season }: { me: Me; plot?: Plot; season?: Season }) {
+function BeforeBuying({
+  me,
+  plot,
+  season,
+  t,
+  lang,
+}: {
+  me: Me;
+  plot?: Plot;
+  season?: Season;
+  t: T;
+  lang: string;
+}) {
   return (
     <main className="screen">
       <section className="board" aria-labelledby="who">
         <div className="top">
           <Mark />
-          <AccountButton />
+          <AccountButton t={t} />
         </div>
         <h1 id="who" className="board-title">
           {me.name}
         </h1>
         <p className="board-sub">
-          {plot?.areaAcres ? `Field of ${plot.areaAcres.toFixed(1)} acres` : 'Your field'}
+          {plot?.areaAcres
+            ? t('home.field', { n: plot.areaAcres.toFixed(1) })
+            : t('home.yourField')}
           {me.village ? `, ${me.village}` : ''} · {me.wallet?.handleMasked}
         </p>
         {season ? (
           <span className="tag tag-gold" style={{ justifySelf: 'start' }}>
-            Open now: {en(season.namesI18n)}
+            {t('home.open', {
+              season: (season.namesI18n as Record<string, string>)?.[lang] ?? en(season.namesI18n),
+            })}
           </span>
         ) : null}
       </section>
       <div className="work">
-        <h2 className="h2">How your cover works</h2>
+        <h2 className="h2">{t('home.how')}</h2>
         <div className="steps">
           <div>
             <b>1</b>
-            <span>A satellite measures the rain on your field every day.</span>
+            <span>{t('home.h1')}</span>
           </div>
           <div>
             <b>2</b>
-            <span>Before you buy, you see exactly how much rain pays how much money.</span>
+            <span>{t('home.h2')}</span>
           </div>
           <div>
             <b>3</b>
-            <span>When rain crosses a mark, money reaches your UPI within a day. No forms.</span>
+            <span>{t('home.h3')}</span>
           </div>
         </div>
       </div>
       <div className="action">
         <Link className="btn" href="/cover/crop">
-          Buy cover for this season <ArrowRight size={22} aria-hidden="true" />
+          {t('home.buy')} <ArrowRight size={22} aria-hidden="true" />
         </Link>
       </div>
     </main>
@@ -103,7 +122,7 @@ function currentPhase(p: Policy) {
   );
 }
 
-function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
+function RainBoard({ me, policies, t }: { me: Me; policies: Policy[]; t: T }) {
   const p = policies[0]!;
   const phase = currentPhase(p);
   const plan = p.phasePlan.find((x) => x.id === phase?.phaseId);
@@ -120,16 +139,17 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
       <section className="board" aria-label="Rain on your field">
         <div className="top">
           <Mark />
-          <AccountButton />
+          <AccountButton t={t} />
         </div>
         {phase && plan ? (
           <span className="board-sub" style={{ fontSize: 15, marginTop: -6 }}>
-            {phaseName(phase.phaseId)}
+            {t(`phase.${phase.phaseId}` as never) || phaseName(phase.phaseId)}
+            {' · '}
             {phase.state === 'IN_PROGRESS'
-              ? ` · day ${phase.daysElapsed} of ${daysBetween(plan.from, plan.to)}`
+              ? t('home.dayOf', { d: phase.daysElapsed, n: daysBetween(plan.from, plan.to) })
               : phase.state === 'UPCOMING'
-                ? ` · starts ${day(plan.from)}`
-                : ' · ended'}
+                ? t('home.starts', { date: day(plan.from) })
+                : t('home.ended')}
           </span>
         ) : null}
         {phase && plan && phase.state !== 'UPCOMING' ? (
@@ -139,11 +159,11 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
             phaseAmountPaise={plan.amountPaise}
             flood={flood}
             rollingDays={p.rollingDays ?? 3}
+            t={t}
           />
         ) : (
           <p className="board-title" style={{ fontSize: 26 }}>
-            Cover starts {plan ? day(plan.from) : 'soon'}. We start measuring rain on your field
-            that day.
+            {t('home.notYet', { date: plan ? day(plan.from) : '' })}
           </p>
         )}
       </section>
@@ -154,14 +174,14 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
             <Banknote size={30} aria-hidden="true" color="var(--board)" />
             <div style={{ display: 'grid', gap: 3 }}>
               <span className="amt">
-                <Money paise={comingPaise} suffix=" on the way" />
+                <Money paise={comingPaise} suffix={t('home.onWay')} />
               </span>
               <span className="s">
-                Approved. Reaches your UPI by{' '}
-                {due
-                  ? `${day(due)}, ${new Date(due).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })}`
-                  : 'tomorrow'}
-                .
+                {t('home.approved', {
+                  when: due
+                    ? `${day(due)}, ${new Date(due).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })}`
+                    : t('home.tomorrow'),
+                })}
               </span>
             </div>
           </div>
@@ -175,30 +195,30 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
               ) : (
                 <Sun size={18} aria-hidden="true" color="var(--drought)" />
               )}
-              {en(p.names)}, {p.cropCode.toLowerCase()}
+              {t(`prod.${p.peril}` as never)}, {t(`crop.${p.cropCode}` as never)}
             </span>
             <span className="tag">
               <Check size={14} aria-hidden="true" />{' '}
-              {p.status === 'ACTIVE' ? 'Active' : 'Starts soon'}
+              {p.status === 'ACTIVE' ? t('home.active') : t('home.startsSoon')}
             </span>
           </div>
           <div>
-            <span className="k">Cover</span>
+            <span className="k">{t('home.cover')}</span>
             <span className="v">{rupees(p.sumInsuredPaise)}</span>
           </div>
           <div>
-            <span className="k">Paid to you so far</span>
+            <span className="k">{t('home.paidSoFar')}</span>
             <span className="v">{rupees(p.paidOutPaise)}</span>
           </div>
         </div>
         <Link className="link" href={`/policy/${p.id}`}>
-          See phases and rain details
+          {t('home.details')}
         </Link>
 
         {policies.length > 1 ? (
           <div style={{ display: 'grid', gap: 8 }}>
             <h2 className="h2" style={{ fontSize: 19 }}>
-              Your other covers
+              {t('home.others')}
             </h2>
             {policies.slice(1).map((o) => (
               <Link
@@ -213,7 +233,7 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
                   <Sun size={22} aria-hidden="true" color="var(--drought)" />
                 )}
                 <span style={{ flex: 1 }}>
-                  {en(o.names)} · {rupees(o.sumInsuredPaise)}
+                  {t(`prod.${o.peril}` as never)} · {rupees(o.sumInsuredPaise)}
                 </span>
                 <ChevronRight size={20} aria-hidden="true" />
               </Link>
@@ -222,26 +242,25 @@ function RainBoard({ me, policies }: { me: Me; policies: Policy[] }) {
         ) : null}
 
         <p className="small" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Satellite size={18} aria-hidden="true" /> Rain checked every day for{' '}
-          {me.name?.split(' ')[0]}&rsquo;s field
+          <Satellite size={18} aria-hidden="true" /> {t('home.checked')}
         </p>
       </div>
       <div className="action">
         <Link className="btn btn-line" href="/cover/crop">
-          Buy another cover
+          {t('home.buyAnother')}
         </Link>
       </div>
     </main>
   );
 }
 
-function AccountButton() {
+function AccountButton({ t }: { t: T }) {
   return (
     <span style={{ display: 'flex', gap: 8 }}>
-      <Link href="/inbox" className="acc-btn" aria-label="Messages">
+      <Link href="/inbox" className="acc-btn" aria-label={t('home.messages')}>
         <Bell size={22} aria-hidden="true" />
       </Link>
-      <Link href="/account" className="acc-btn" aria-label="Your account">
+      <Link href="/account" className="acc-btn" aria-label={t('home.account')}>
         <CircleUserRound size={24} aria-hidden="true" />
       </Link>
     </span>

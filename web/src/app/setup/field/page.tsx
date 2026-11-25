@@ -17,6 +17,7 @@ import { FormError } from '@/components/form-error';
 import { StepBoard } from '@/components/step-board';
 import { messageFor, post } from '@/lib/client';
 import { averagedFix } from '@/lib/gps';
+import { useT } from '@/i18n/client';
 
 const FieldMap = dynamic(() => import('@/components/field-map'), {
   ssr: false,
@@ -28,6 +29,7 @@ const ALLOW_TAP = process.env.NEXT_PUBLIC_ALLOW_MAP_PIN === '1';
 
 export default function FieldPage() {
   const router = useRouter();
+  const { t } = useT();
   const [pin, setPin] = useState<Pin | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [method, setMethod] = useState<'GPS_PIN' | 'DRAW'>('GPS_PIN');
@@ -49,11 +51,7 @@ export default function FieldPage() {
       setMethod('GPS_PIN');
     } catch (e) {
       const m = (e as Error).message;
-      setError(
-        m === 'denied'
-          ? 'Location is switched off for this app. Allow location in your phone settings, then try again.'
-          : 'Could not get a GPS reading. Move to open ground in your field and try again.',
-      );
+      setError(m === 'denied' ? t('field.locOff') : t('field.noFix'));
     } finally {
       setLocating(false);
     }
@@ -85,10 +83,10 @@ export default function FieldPage() {
   return (
     <main className="screen">
       <StepBoard
-        back={{ href: '/setup/about', label: 'Back' }}
+        back={{ href: '/setup/about', label: t('c.back') }}
         step={2}
-        title="Mark your field"
-        sub="Stand in the middle of your field, outdoors, and tap the button"
+        title={t('field.title')}
+        sub={t('field.sub')}
       />
       <div className="work">
         <div className="map">
@@ -113,23 +111,14 @@ export default function FieldPage() {
                 <TriangleAlert size={16} aria-hidden="true" />
               )}
               {method === 'DRAW'
-                ? 'Placed on map (demo)'
-                : `GPS accurate to ${Math.round(accuracy!)} m`}
+                ? t('field.placed')
+                : t('field.accurate', { m: Math.round(accuracy!) })}
             </span>
           ) : null}
         </div>
 
-        {pin && !good && usable ? (
-          <p className="small">
-            The reading is not very precise. Move to open ground, away from trees and walls, and try
-            again for a better reading.
-          </p>
-        ) : null}
-        {pin && !usable ? (
-          <FormError>
-            The GPS reading is off by more than 50 m. Move to open ground and try again.
-          </FormError>
-        ) : null}
+        {pin && !good && usable ? <p className="small">{t('field.imprecise')}</p> : null}
+        {pin && !usable ? <FormError>{t('field.tooFar')}</FormError> : null}
 
         <button
           className={`btn${pin ? ' btn-line' : ''}`}
@@ -144,37 +133,36 @@ export default function FieldPage() {
           )}
           {locating
             ? reading
-              ? `Reading GPS · ${Math.round(reading)} m`
-              : 'Finding your field'
+              ? t('field.reading', { m: Math.round(reading) })
+              : t('field.finding')
             : pin
-              ? 'Use my location again'
-              : 'Use my location'}
+              ? t('field.again')
+              : t('about.useLoc')}
         </button>
-        {ALLOW_TAP && !pin ? (
-          <p className="small">Demo: you can also tap the map to place the pin.</p>
-        ) : null}
+        {ALLOW_TAP && !pin ? <p className="small">{t('field.tapDemo')}</p> : null}
 
         <div>
           <span className="label" id="acres-label">
-            Field size
+            {t('field.size')}
           </span>
           <div className="stepper" role="group" aria-labelledby="acres-label">
             <button
               type="button"
               className="round"
-              aria-label="Half an acre less"
+              aria-label={t('field.less')}
               disabled={acres <= 0.5}
               onClick={() => setAcres((a) => a - 0.5)}
             >
               <Minus size={24} aria-hidden="true" />
             </button>
             <span className="fig" style={{ fontSize: 34, fontWeight: 600 }} aria-live="polite">
-              {acres.toFixed(1)} <span style={{ fontSize: 20, fontWeight: 500 }}>acres</span>
+              {acres.toFixed(1)}{' '}
+              <span style={{ fontSize: 20, fontWeight: 500 }}>{t('field.acres')}</span>
             </span>
             <button
               type="button"
               className="round"
-              aria-label="Half an acre more"
+              aria-label={t('field.more')}
               disabled={acres >= 50}
               onClick={() => setAcres((a) => a + 0.5)}
             >
@@ -184,7 +172,7 @@ export default function FieldPage() {
         </div>
         <div>
           <label className="label" htmlFor="survey">
-            Survey / gat number <span className="small">(from your 7/12, optional)</span>
+            {t('field.survey')} <span className="small">{t('field.surveyOpt')}</span>
           </label>
           <div className="field text">
             <input
@@ -192,21 +180,19 @@ export default function FieldPage() {
               inputMode="text"
               autoCapitalize="characters"
               maxLength={20}
-              placeholder="For example 112/2"
+              placeholder={t('field.surveyEg')}
               value={survey}
               onChange={(e) => setSurvey(e.target.value.replace(/[^0-9A-Za-z/ -]/g, ''))}
             />
           </div>
-          <p className="small">
-            Helps us confirm this land is yours, so payouts are not held up later.
-          </p>
+          <p className="small">{t('field.surveyWhy')}</p>
         </div>
         {error ? <FormError>{error}</FormError> : null}
       </div>
       <div className="action">
         <button className="btn" type="button" disabled={!usable || busy} onClick={save}>
           {busy ? <LoaderCircle className="spin" size={22} aria-hidden="true" /> : null}
-          {busy ? 'Saving' : 'Save field'}
+          {busy ? t('c.saving') : t('field.save')}
           {busy ? null : <ArrowRight size={22} aria-hidden="true" />}
         </button>
       </div>

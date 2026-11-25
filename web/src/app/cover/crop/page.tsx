@@ -8,6 +8,8 @@ import { FormError } from '@/components/form-error';
 import { StepBoard } from '@/components/step-board';
 import { get, messageFor } from '@/lib/client';
 import { en } from '@/lib/format';
+import { useT } from '@/i18n/client';
+import type { Key } from '@/i18n';
 
 type Crop = { code: string; namesI18n: unknown };
 type Season = { code: string; namesI18n: unknown };
@@ -17,6 +19,12 @@ const ORDER = ['GRAM', 'WHEAT', 'JOWAR', 'TUR', 'SOYBEAN', 'COTTON'];
 
 export default function CropPage() {
   const router = useRouter();
+  const { t, lang } = useT();
+  const cropName = (c: Crop) => {
+    const k = `crop.${c.code}` as Key;
+    const s = t(k);
+    return s === k ? en(c.namesI18n) : s;
+  };
   const [crops, setCrops] = useState<Crop[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [plot, setPlot] = useState<Plot | null>(null);
@@ -42,7 +50,7 @@ export default function CropPage() {
   const name = crops.find((c) => c.code === crop);
   return (
     <main className="screen">
-      <StepBoard back={{ href: '/', label: 'Home' }} title="Which crop is in your field" />
+      <StepBoard back={{ href: '/', label: t('c.home') }} title={t('crop.title')} />
       <div className="work" style={{ gap: 14 }}>
         <div className="crops" role="group" aria-label="Crop">
           {crops.map((c) => (
@@ -59,13 +67,13 @@ export default function CropPage() {
                 </span>
               ) : null}
               <CropArt code={c.code} />
-              {en(c.namesI18n)}
+              {cropName(c)}
             </button>
           ))}
         </div>
         <div>
           <span className="label" id="season-label">
-            Season
+            {t('crop.season')}
           </span>
           <div className="chips" role="group" aria-labelledby="season-label">
             {seasons.map((s) => (
@@ -77,7 +85,7 @@ export default function CropPage() {
                 onClick={() => setSeason(s.code)}
               >
                 {season === s.code ? <Check size={16} aria-hidden="true" /> : null}
-                {en(s.namesI18n)}
+                {(s.namesI18n as Record<string, string>)?.[lang] ?? en(s.namesI18n)}
               </button>
             ))}
           </div>
@@ -94,10 +102,8 @@ export default function CropPage() {
           }
         >
           {name
-            ? `See covers for ${en(name.namesI18n)
-                .replace(/ \(.*\)$/, '')
-                .toLowerCase()}`
-            : 'Choose a crop'}
+            ? t('crop.see', { crop: cropName(name).replace(/ \(.*\)$/, '') })
+            : t('crop.choose')}
           <ArrowRight size={22} aria-hidden="true" />
         </button>
       </div>

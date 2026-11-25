@@ -7,11 +7,13 @@ import { FormError } from '@/components/form-error';
 import { StepBoard } from '@/components/step-board';
 import { messageFor, post } from '@/lib/client';
 import type { Me } from '@/lib/format';
+import { useT } from '@/i18n/client';
 
 const VPA = /^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,63}$/;
 
 export default function UpiPage() {
   const router = useRouter();
+  const { t } = useT();
   const [vpa, setVpa] = useState('');
   const [checked, setChecked] = useState<Me['wallet']>(null);
   const [busy, setBusy] = useState(false);
@@ -20,7 +22,7 @@ export default function UpiPage() {
   async function check(e: React.FormEvent) {
     e.preventDefault();
     if (!VPA.test(vpa)) {
-      setError('Enter your UPI ID the way it appears in your UPI app, for example name@okaxis.');
+      setError(t('upi.invalid'));
       return;
     }
     setBusy(true);
@@ -38,16 +40,16 @@ export default function UpiPage() {
   return (
     <main className="screen">
       <StepBoard
-        back={{ href: '/setup/field', label: 'Back' }}
+        back={{ href: '/setup/field', label: t('c.back') }}
         step={3}
-        title="Where should we send money"
-        sub="Payouts go only to this UPI ID"
+        title={t('upi.title')}
+        sub={t('upi.sub')}
       />
       <form className="contents" onSubmit={check} noValidate>
         <div className="work">
           <div>
             <label className="label" htmlFor="vpa">
-              UPI ID
+              {t('upi.label')}
             </label>
             <div className="field text" data-invalid={!!error}>
               <input
@@ -73,19 +75,16 @@ export default function UpiPage() {
               <div className="money quiet">
                 <Landmark size={30} aria-hidden="true" color="var(--board)" />
                 <div style={{ display: 'grid', gap: 2 }}>
-                  <span className="s">Name at the bank</span>
+                  <span className="s">{t('upi.bankName')}</span>
                   <span className="fig" style={{ fontWeight: 600, fontSize: 23, lineHeight: 1.1 }}>
                     {checked.verifiedName}
                   </span>
                   <span className="tag" style={{ justifySelf: 'start' }}>
-                    <Check size={16} aria-hidden="true" /> Account checked
+                    <Check size={16} aria-hidden="true" /> {t('upi.checked')}
                   </span>
                 </div>
               </div>
-              <p className="small">
-                If this is not your name, change the UPI ID. Money sent to the wrong account cannot
-                be taken back.
-              </p>
+              <p className="small">{t('upi.notYou')}</p>
             </>
           ) : null}
         </div>
@@ -93,7 +92,7 @@ export default function UpiPage() {
           {checked ? (
             <>
               <button className="btn" type="button" onClick={() => router.replace('/')}>
-                <Check size={22} aria-hidden="true" /> Yes, this is my account
+                <Check size={22} aria-hidden="true" /> {t('upi.yes')}
               </button>
               <button
                 className="btn btn-quiet"
@@ -103,13 +102,13 @@ export default function UpiPage() {
                   setVpa('');
                 }}
               >
-                Change UPI ID
+                {t('upi.change')}
               </button>
             </>
           ) : (
             <button className="btn" type="submit" disabled={busy || !vpa}>
               {busy ? <LoaderCircle className="spin" size={22} aria-hidden="true" /> : null}
-              {busy ? 'Checking with your bank' : 'Check UPI ID'}
+              {busy ? t('upi.checking') : t('upi.check')}
             </button>
           )}
         </div>

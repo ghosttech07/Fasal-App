@@ -16,13 +16,19 @@ import { or } from './or';
 import { pa } from './pa';
 import { ta } from './ta';
 import { te } from './te';
+import * as b2 from './b2';
 
 export type { Key };
 export type Lang = LanguageCode;
 export const LANG_COOKIE = 'fs_lang';
 export const LANG_LIST = SUPPORTED_LANGUAGES.map((c) => LANGUAGES[c]);
 
-const DICTS: Record<Lang, Dict> = { en, hi, bn, te, mr, ta, gu, kn, ml, or, pa, as };
+// Batch 1 (welcome, sign-in) + batch 2 (setup, buying, home, policy), merged per language.
+const B1: Record<Exclude<Lang, 'en'>, Dict> = { hi, bn, te, mr, ta, gu, kn, ml, or, pa, as };
+const DICTS = Object.fromEntries(
+  (Object.keys(B1) as Exclude<Lang, 'en'>[]).map((l) => [l, { ...B1[l], ...b2[l] }]),
+) as Record<Lang, Dict>;
+DICTS.en = en;
 
 export const asLang = (v: unknown): Lang => (isLanguageCode(v) ? v : 'en');
 

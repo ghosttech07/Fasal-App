@@ -17,15 +17,13 @@ import { get, messageFor, patch, post } from '@/lib/client';
 import type { Me } from '@/lib/format';
 import { averagedFix } from '@/lib/gps';
 import { INDIA_STATES, districtCode, placeFromPosition } from '@/lib/place';
+import { useT } from '@/i18n/client';
 
-const ID_TYPES = [
-  ['VOTER_ID', 'Voter ID'],
-  ['RATION_CARD', 'Ration card'],
-  ['PAN', 'PAN card'],
-] as const;
+const ID_TYPES = ['VOTER_ID', 'RATION_CARD', 'PAN'] as const;
 
 export default function AboutPage() {
   const router = useRouter();
+  const { t, lang } = useT();
   const [me, setMe] = useState<Me | null>(null);
   const [agree, setAgree] = useState(false);
   const [name, setName] = useState('');
@@ -75,15 +73,11 @@ export default function AboutPage() {
       ].filter(Boolean);
       setLocated(
         filled.length
-          ? `Found: ${filled.join(', ')}.${place.district ? '' : ' Please choose your district.'}`
-          : 'Could not read your place from the map. Please choose it below.',
+          ? `${t('about.found', { place: filled.join(', ') })}${place.district ? '' : ` ${t('about.pickDistrict')}`}`
+          : t('about.noPlace'),
       );
     } catch (e) {
-      setError(
-        (e as Error).message === 'denied'
-          ? 'Location is switched off for this app. Allow location in your phone settings, or choose your place below.'
-          : 'Could not find your location. Check your signal, or choose your place below.',
-      );
+      setError((e as Error).message === 'denied' ? t('about.locOff') : t('about.locFail'));
     } finally {
       setLocating(false);
     }
@@ -100,7 +94,7 @@ export default function AboutPage() {
     setError(null);
     try {
       if (!me?.onboarding.consent)
-        await post('/api/fs/me/consents', { purposes: ['INSURANCE_SERVICING'], language: 'en' });
+        await post('/api/fs/me/consents', { purposes: ['INSURANCE_SERVICING'], language: lang });
       await patch('/api/fs/me', {
         name: name.trim(),
         districtCode: districtCode(stateCode, district),
@@ -116,16 +110,15 @@ export default function AboutPage() {
 
   return (
     <main className="screen">
-      <StepBoard step={1} title="About you" sub="Step 1 of 3 · takes about a minute" />
+      <StepBoard step={1} title={t('about.title')} sub={t('about.sub')} />
       <form className="contents" onSubmit={save} noValidate>
         <div className="work">
           <div className="consent">
             <strong>
               <ShieldCheck size={22} aria-hidden="true" color="var(--board)" />
-              Your data, your choice
+              {t('about.consentH')}
             </strong>
-            We use your name, phone and field location only to give you cover and send you money.
-            Only your insurer sees it.
+            {t('about.consent')}
             <label className="check">
               <input
                 type="checkbox"
@@ -133,13 +126,13 @@ export default function AboutPage() {
                 disabled={me?.onboarding.consent}
                 onChange={(e) => setAgree(e.target.checked)}
               />
-              I agree
+              {t('about.agree')}
             </label>
           </div>
 
           <div>
             <label className="label" htmlFor="name">
-              Full name
+              {t('about.name')}
             </label>
             <div className="field text">
               <input
@@ -154,7 +147,7 @@ export default function AboutPage() {
 
           <fieldset className="place">
             <legend className="h2" style={{ fontSize: 20 }}>
-              Where is your farm
+              {t('about.where')}
             </legend>
             <button
               className="btn btn-line"
@@ -167,19 +160,19 @@ export default function AboutPage() {
               ) : (
                 <LocateFixed size={22} aria-hidden="true" />
               )}
-              {locating ? 'Finding your place' : 'Use my location'}
+              {locating ? t('about.finding') : t('about.useLoc')}
             </button>
             {located ? (
               <p className="small place-found" role="status">
                 <Check size={16} aria-hidden="true" /> {located}
               </p>
             ) : (
-              <p className="small">Or choose it yourself:</p>
+              <p className="small">{t('about.orChoose')}</p>
             )}
 
             <div>
               <label className="label" htmlFor="state">
-                State
+                {t('about.state')}
               </label>
               <div className="field">
                 <select
@@ -192,7 +185,7 @@ export default function AboutPage() {
                   }}
                 >
                   <option value="" disabled>
-                    Choose your state
+                    {t('about.chooseState')}
                   </option>
                   {INDIA_STATES.map((s) => (
                     <option key={s.code} value={s.code}>
@@ -206,7 +199,7 @@ export default function AboutPage() {
 
             <div>
               <label className="label" htmlFor="district">
-                District
+                {t('about.district')}
               </label>
               <div className="field" data-disabled={!stateCode}>
                 <select
@@ -217,7 +210,7 @@ export default function AboutPage() {
                   onChange={(e) => setDistrict(e.target.value)}
                 >
                   <option value="" disabled>
-                    {stateCode ? 'Choose your district' : 'Choose a state first'}
+                    {stateCode ? t('about.chooseDistrict') : t('about.stateFirst')}
                   </option>
                   {districts.map((d) => (
                     <option key={d} value={d}>
@@ -231,7 +224,7 @@ export default function AboutPage() {
 
             <div>
               <label className="label" htmlFor="village">
-                Village or town
+                {t('about.village')}
               </label>
               <div className="field text">
                 <input
@@ -249,7 +242,7 @@ export default function AboutPage() {
             <div className="two">
               <div>
                 <label className="label" htmlFor="idtype">
-                  ID type
+                  {t('about.idType')}
                 </label>
                 <div className="field">
                   <select
@@ -258,9 +251,9 @@ export default function AboutPage() {
                     value={idType}
                     onChange={(e) => setIdType(e.target.value)}
                   >
-                    {ID_TYPES.map(([code, label]) => (
+                    {ID_TYPES.map((code) => (
                       <option key={code} value={code}>
-                        {label}
+                        {t(`id.${code}`)}
                       </option>
                     ))}
                   </select>
@@ -269,7 +262,7 @@ export default function AboutPage() {
               </div>
               <div>
                 <label className="label" htmlFor="idnum">
-                  ID number
+                  {t('about.idNum')}
                 </label>
                 <div className="field text" data-invalid={!idOk && idNumber.length > 0}>
                   <input
@@ -284,7 +277,7 @@ export default function AboutPage() {
             </div>
           ) : (
             <button type="button" className="link" onClick={() => setShowId(true)}>
-              + Add an ID (optional, pays faster)
+              {t('about.addId')}
             </button>
           )}
           {error ? <FormError>{error}</FormError> : null}
@@ -292,7 +285,7 @@ export default function AboutPage() {
         <div className="action">
           <button className="btn" type="submit" disabled={!ready || busy}>
             {busy ? <LoaderCircle className="spin" size={22} aria-hidden="true" /> : null}
-            {busy ? 'Saving' : 'Save and continue'}
+            {busy ? t('c.saving') : t('c.saveContinue')}
             {busy ? null : <ArrowRight size={22} aria-hidden="true" />}
           </button>
         </div>
