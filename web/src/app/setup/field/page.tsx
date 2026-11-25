@@ -75,7 +75,7 @@ export default function FieldPage() {
       });
       router.push('/setup/upi');
     } catch (e) {
-      setError(messageFor(e));
+      setError(messageFor(e, t));
       setBusy(false);
     }
   }

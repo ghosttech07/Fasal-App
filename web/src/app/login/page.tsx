@@ -47,7 +47,7 @@ export default function LoginPage() {
       );
       router.push('/otp');
     } catch (err) {
-      setError(messageFor(err));
+      setError(messageFor(err, t));
       setBusy(false);
     }
   }

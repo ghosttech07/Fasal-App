@@ -1,3 +1,5 @@
+import type { Key } from '@/i18n';
+
 /** Browser-side JSON POST to our own Next.js routes. Throws an ApiError carrying the API's problem code. */
 export class ApiError extends Error {
   constructor(
@@ -29,48 +31,33 @@ async function send<T>(method: string, url: string, body?: unknown): Promise<T> 
   return data as T;
 }
 
-/** Plain-language messages for API problem codes (frontend spec §3: specific, with the way out). */
-export function messageFor(e: unknown): string {
+/** Plain-language messages for API problem codes (frontend spec §3: specific, with the way out), in the farmer's language. */
+const KNOWN = new Set([
+  'network',
+  'otp_rate_limited',
+  'otp_invalid',
+  'otp_expired',
+  'otp_attempts_exceeded',
+  'validation_failed',
+  'id_already_registered',
+  'gps_accuracy_too_low',
+  'vpa_invalid',
+  'already_insured',
+  'product_not_eligible',
+  'payment_failed',
+  'role_not_supported',
+  'too_many_open_grievances',
+]);
+export function messageFor(e: unknown, t: (key: Key) => string): string {
   const code =
     e instanceof ApiError
       ? e.status === 429 && e.code === 'unknown'
         ? 'busy'
         : e.code
       : 'unknown';
-  if (code === 'busy') return 'Too many tries. Wait a minute, then try again.';
-  switch (code) {
-    case 'network':
-      return 'No internet connection. Check your signal and try again.';
-    case 'otp_rate_limited':
-      return 'Too many codes asked for this number. Wait an hour, then try again.';
-    case 'otp_invalid':
-      return 'That code is not right. Check the SMS and try again.';
-    case 'otp_expired':
-      return 'This code has expired. Ask for a new one.';
-    case 'otp_attempts_exceeded':
-      return 'Too many wrong codes. Ask for a new one.';
-    case 'validation_failed':
-      return 'Please check what you entered.';
-    case 'id_already_registered':
-      return 'This ID is already registered to another account. One person can have one account.';
-    case 'gps_accuracy_too_low':
-      return 'The GPS signal is too weak. Move to open ground in your field and try again.';
-    case 'vpa_invalid':
-      return 'We could not find this UPI ID. Check the spelling, for example name@okaxis.';
-    case 'already_insured':
-      return 'This field already has this cover for the season.';
-    case 'product_not_eligible':
-      return 'This cover is not available for your crop or district.';
-    case 'payment_failed':
-      return 'The payment did not go through. No money was taken. Try again.';
-    case 'plot_not_found':
-    case 'policy_not_found':
-      return 'We could not find this. Go back and try again.';
-    case 'role_not_supported':
-      return 'This number belongs to a field agent. Agent sign-in is coming soon.';
-    default:
-      return 'Something went wrong on our side. Try again in a minute.';
-  }
+  if (code === 'busy') return t('err.busy');
+  if (code === 'plot_not_found' || code === 'policy_not_found') return t('err.not_found');
+  return KNOWN.has(code) ? t(`err.${code}` as Key) : t('err.unknown');
 }
 
 /** sessionStorage can throw (private mode, blocked storage); the OTP hand-off must not crash the page. */

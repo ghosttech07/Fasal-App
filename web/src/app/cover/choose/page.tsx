@@ -49,7 +49,7 @@ function Choose() {
           [...r].sort((a, b) => Number(a.peril !== 'DROUGHT') - Number(b.peril !== 'DROUGHT')),
         ),
       )
-      .catch((e) => setError(messageFor(e)));
+      .catch((e) => setError(messageFor(e, t)));
   }, [q, crop]);
 
   async function choose(v: Quote) {
@@ -63,7 +63,7 @@ function Choose() {
       });
       router.push(`/cover/pay/${policy.id}`);
     } catch (e) {
-      setError(messageFor(e));
+      setError(messageFor(e, t));
       setBusy(null);
     }
   }

@@ -41,7 +41,7 @@ export default function OtpPage() {
       handoff.set('fs_otp', '');
       window.location.replace('/'); // full load: the new session cookie and a fresh server render, no client cache
     } catch (err) {
-      setError(messageFor(err));
+      setError(messageFor(err, t));
       setBusy(false);
       submitted.current = '';
     }
@@ -65,7 +65,7 @@ export default function OtpPage() {
       setPending(next);
       setCode('');
     } catch (err) {
-      setError(messageFor(err));
+      setError(messageFor(err, t));
     } finally {
       setBusy(false);
     }

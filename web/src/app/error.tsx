@@ -3,9 +3,11 @@
 import { RotateCw, WifiOff, TriangleAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Mark } from '@/components/mark';
+import { useT } from '@/i18n/client';
 
 /** Any screen that fails to load lands here, with the reason in plain words and one way forward. */
 export default function ErrorPage({ reset }: { error: Error; reset: () => void }) {
+  const { t } = useT();
   const [offline, setOffline] = useState(false);
   useEffect(() => setOffline(!navigator.onLine), []);
 
@@ -14,13 +16,9 @@ export default function ErrorPage({ reset }: { error: Error; reset: () => void }
       <section className="board" aria-labelledby="err">
         <Mark />
         <h1 id="err" className="board-title">
-          {offline ? 'No internet connection' : 'This screen did not load'}
+          {offline ? t('errp.offlineT') : t('errp.failT')}
         </h1>
-        <p className="board-sub">
-          {offline
-            ? 'Your money and cover are safe. Check your signal, then try again.'
-            : 'Your money and cover are safe. This is a problem on our side; try again in a moment.'}
-        </p>
+        <p className="board-sub">{offline ? t('errp.offline') : t('errp.fail')}</p>
       </section>
       <div className="work" style={{ justifyItems: 'center', paddingTop: 40 }}>
         {offline ? (
@@ -35,7 +33,7 @@ export default function ErrorPage({ reset }: { error: Error; reset: () => void }
           type="button"
           onClick={() => (navigator.onLine ? reset() : location.reload())}
         >
-          <RotateCw size={20} aria-hidden="true" /> Try again
+          <RotateCw size={20} aria-hidden="true" /> {t('errp.retry')}
         </button>
       </div>
     </main>

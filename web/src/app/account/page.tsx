@@ -18,9 +18,11 @@ import Link from 'next/link';
 import { SignOut } from '@/components/sign-out';
 import { LanguageSelect } from '@/components/language-select';
 import { StepBoard } from '@/components/step-board';
-import { day, en, num1, phaseName, rupees, type Me, type Policy } from '@/lib/format';
+import { day, num1, phaseName, rupees, type Me, type Policy } from '@/lib/format';
 import { serverGet } from '@/lib/server-api';
 import { Money } from '@/components/money';
+import { getT } from '@/i18n/server';
+import type { Key } from '@/i18n';
 
 type Plot = {
   id: string;
@@ -41,6 +43,7 @@ function Row({
   status,
   href,
   value,
+  soon,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -49,6 +52,7 @@ function Row({
   status?: React.ReactNode;
   href?: string;
   value?: React.ReactNode;
+  soon?: string;
 }) {
   const inner = (
     <>
@@ -66,7 +70,7 @@ function Row({
         {status ? <span className={`acc-s ${state ?? ''}`}>{status}</span> : null}
       </span>
       {value}
-      {state === 'soon' && !href ? <span className="acc-soon">Soon</span> : null}
+      {state === 'soon' && !href ? <span className="acc-soon">{soon}</span> : null}
       {href ? <ChevronRight size={20} aria-hidden="true" color="var(--ink-2)" /> : null}
     </>
   );
@@ -85,6 +89,8 @@ export default async function AccountPage() {
     serverGet<Plot[]>('/me/plots'),
     serverGet<Policy[]>('/policies'),
   ]);
+  const { t } = await getT();
+  const S = t('c.soon');
   const phone = me.phone.replace(/^\+91(\d{5})(\d{5})$/, '+91 $1 $2');
   const initials = (me.name ?? '?')
     .split(/\s+/)
@@ -111,8 +117,8 @@ export default async function AccountPage() {
   return (
     <main className="screen">
       <StepBoard
-        back={{ href: '/', label: 'Home' }}
-        title={<span className="sr-only">Your account</span>}
+        back={{ href: '/', label: t('c.home') }}
+        title={<span className="sr-only">{t('acc.title')}</span>}
       >
         <div className="who">
           <span className="avatar" aria-hidden="true">
@@ -128,19 +134,19 @@ export default async function AccountPage() {
         </div>
         <dl className="tally">
           <div>
-            <dt>Cover</dt>
+            <dt>{t('acc.cover')}</dt>
             <dd>
               <Money paise={cover} />
             </dd>
           </div>
           <div>
-            <dt>On the way</dt>
+            <dt>{t('acc.onWay')}</dt>
             <dd className={coming ? 'gold' : ''}>
               <Money paise={coming} />
             </dd>
           </div>
           <div>
-            <dt>Paid to you</dt>
+            <dt>{t('acc.paid')}</dt>
             <dd>
               <Money paise={paid} />
             </dd>
@@ -152,16 +158,14 @@ export default async function AccountPage() {
         <section aria-labelledby="a-ver" className="acc-sec">
           <div className="acc-head">
             <h2 id="a-ver" className="h2">
-              Account checks
+              {t('acc.checks')}
             </h2>
-            <span className="small">
-              {done} of {checks.length} done
-            </span>
+            <span className="small">{t('acc.done', { n: done, total: checks.length })}</span>
           </div>
           <div
             className="acc-prog"
             role="img"
-            aria-label={`${done} of ${checks.length} checks done`}
+            aria-label={t('acc.done', { n: done, total: checks.length })}
           >
             {checks.map((c, i) => (
               <i key={i} className={c ? 'on' : ''} />
@@ -170,53 +174,55 @@ export default async function AccountPage() {
           <div className="acc-list">
             <Row
               icon={<Phone size={20} />}
-              label="Mobile number"
+              label={t('acc.mobile')}
               detail={phone}
               state="done"
-              status="Verified by SMS code"
+              status={t('acc.smsVerified')}
             />
             <Row
               icon={<Landmark size={20} />}
-              label="UPI for payouts"
-              detail={me.wallet ? me.wallet.handleMasked : 'Not linked yet'}
+              label={t('acc.upi')}
+              detail={me.wallet ? me.wallet.handleMasked : t('acc.notLinked')}
               state={me.wallet?.status === 'VERIFIED' ? 'done' : 'warn'}
               status={
                 me.wallet?.verifiedName
-                  ? `Bank name: ${me.wallet.verifiedName}`
-                  : 'Link a UPI ID to get paid'
+                  ? t('acc.bankName', { name: me.wallet.verifiedName })
+                  : t('acc.linkUpi')
               }
               href={me.wallet ? undefined : '/setup/upi'}
             />
             <Row
               icon={<IdCard size={20} />}
-              label="Identity"
-              detail="Aadhaar, DigiLocker or a photo of your voter ID"
+              label={t('acc.identity')}
+              detail={t('acc.idDetail')}
+              soon={S}
               state={me.kycStatus === 'BASIC' ? 'warn' : 'soon'}
-              status={
-                me.kycStatus === 'BASIC' ? 'ID number noted · full check coming soon' : undefined
-              }
+              status={me.kycStatus === 'BASIC' ? t('acc.idNoted') : undefined}
             />
             <Row
               icon={<LandPlot size={20} />}
-              label="Land record (7/12)"
-              detail="Optional · shows the field is yours"
+              label={t('acc.land')}
+              detail={t('acc.landDetail')}
               state="soon"
+              soon={S}
             />
           </div>
         </section>
 
         <section aria-labelledby="a-wx" className="acc-sec">
           <h2 id="a-wx" className="h2">
-            Weather at your field
+            {t('acc.weather')}
           </h2>
           {drought && phase && phase.indexValue !== null ? (
             <Link href={`/policy/${drought.id}`} className="wx">
               <div className="wx-top">
                 <CloudRain size={22} aria-hidden="true" color="var(--flood)" />
                 <span>
-                  <b className="fig">{num1(phase.observedMm)} mm</b> fell in{' '}
-                  {phaseName(phase.phaseId).toLowerCase()} · normal by now{' '}
-                  <span className="fig">{num1(phase.normalMm)} mm</span>
+                  {t('acc.fell', {
+                    mm: num1(phase.observedMm),
+                    phase: t(`phase.${phase.phaseId}` as Key) || phaseName(phase.phaseId),
+                    normal: num1(phase.normalMm),
+                  })}
                 </span>
               </div>
               <div className="wx-bar" aria-hidden="true">
@@ -228,45 +234,49 @@ export default async function AccountPage() {
                 <span className="wx-normal" />
               </div>
               <div className="wx-foot">
-                <span className="tag tag-warn">{num1(phase.indexValue)}% below normal</span>
-                <span className="small">Updated {day(new Date())}</span>
+                <span className="tag tag-warn">
+                  {t('pol.belowNormal', { pct: num1(phase.indexValue) })}
+                </span>
+                <span className="small">{t('acc.updated', { date: day(new Date()) })}</span>
               </div>
             </Link>
           ) : (
-            <p className="small">Rain on your field shows here once your cover starts.</p>
+            <p className="small">{t('acc.noRain')}</p>
           )}
           <div className="acc-list">
             <Row
               icon={<Sun size={20} />}
-              label="5-day forecast"
-              detail="Rain and heat expected at your field"
+              label={t('acc.forecast')}
+              detail={t('acc.forecastD')}
               state="soon"
+              soon={S}
             />
             <Row
               icon={<Bell size={20} />}
-              label="Alerts by SMS"
-              detail="When money is sent or rain nears a payout mark"
+              label={t('acc.alerts')}
+              detail={t('acc.alertsD')}
               state="soon"
+              soon={S}
             />
           </div>
         </section>
 
         <section aria-labelledby="a-field" className="acc-sec">
           <h2 id="a-field" className="h2">
-            My fields
+            {t('acc.fields')}
           </h2>
           <div className="acc-list">
             {plots.map((p, i) => (
               <Row
                 key={p.id}
                 icon={<MapPin size={20} />}
-                label={`Field ${i + 1} · ${p.areaAcres ? `${p.areaAcres.toFixed(1)} acres` : 'size not set'}`}
-                detail={`${me.village ?? ''} · added ${day(p.createdAt)}`}
+                label={`${t('acc.field', { n: i + 1 })} · ${p.areaAcres ? `${p.areaAcres.toFixed(1)} ${t('field.acres')}` : t('acc.sizeNotSet')}`}
+                detail={`${me.village ?? ''} · ${t('acc.added', { date: day(p.createdAt) })}`}
                 state={p.captureMethod === 'GPS_PIN' ? 'done' : 'warn'}
                 status={
                   p.captureMethod === 'GPS_PIN' && p.gpsAccuracyM
-                    ? `GPS accurate to ${Math.round(p.gpsAccuracyM)} m`
-                    : 'Placed on the map, not checked by GPS'
+                    ? t('field.accurate', { m: Math.round(p.gpsAccuracyM) })
+                    : t('acc.placed')
                 }
               />
             ))}
@@ -275,14 +285,14 @@ export default async function AccountPage() {
 
         <section aria-labelledby="a-cover" className="acc-sec">
           <h2 id="a-cover" className="h2">
-            My covers
+            {t('acc.covers')}
           </h2>
           <div className="acc-list">
             {policies.length === 0 ? (
               <Row
                 icon={<ShieldCheck size={20} />}
-                label="No cover yet"
-                detail="Buy cover for this season"
+                label={t('acc.noCover')}
+                detail={t('home.buy')}
                 href="/cover/crop"
               />
             ) : null}
@@ -290,7 +300,7 @@ export default async function AccountPage() {
               <Row
                 key={p.id}
                 icon={p.peril === 'FLOOD' ? <CloudRain size={20} /> : <Sun size={20} />}
-                label={`${en(p.names)}, ${p.cropCode.toLowerCase()}`}
+                label={`${t(`prod.${p.peril}` as Key)}, ${t(`crop.${p.cropCode}` as Key)}`}
                 detail={<span className="fig">{p.policyNumber}</span>}
                 value={<span className="fig acc-val">{rupees(p.sumInsuredPaise)}</span>}
                 href={`/policy/${p.id}`}
@@ -301,49 +311,49 @@ export default async function AccountPage() {
 
         <section aria-labelledby="a-pol" className="acc-sec">
           <h2 id="a-pol" className="h2">
-            Policies and help
+            {t('acc.help')}
           </h2>
           <div className="acc-list">
             <Row
               icon={<FileText size={20} />}
-              label="How payouts are calculated"
-              detail="Worked out on your own cover"
+              label={t('acc.rules')}
+              detail={t('acc.rulesD')}
               href="/account/payouts"
             />
             <Row
               icon={<FileText size={20} />}
-              label="Terms of cover"
-              detail="How the cover works, in plain words"
+              label={t('acc.terms')}
+              detail={t('acc.termsD')}
               href="/legal/terms"
             />
             <Row
               icon={<FileText size={20} />}
-              label="Payments and refunds"
-              detail="Where your premium goes · cancelling"
+              label={t('acc.pay')}
+              detail={t('acc.payD')}
               href="/legal/terms"
             />
             <Row
               icon={<ShieldCheck size={20} />}
-              label="Your data"
-              detail="What we keep, who sees it, your rights"
+              label={t('acc.data')}
+              detail={t('acc.dataD')}
               href="/legal/privacy"
             />
             <Row
               icon={<Scale size={20} />}
-              label="Complaints"
-              detail="Grievance officer · Bima Bharosa · Ombudsman"
+              label={t('acc.compl')}
+              detail={t('acc.complD')}
               href="/legal/grievance"
             />
             <Row
               icon={<Headphones size={20} />}
-              label="Tell us a problem"
-              detail="We answer within 14 days"
+              label={t('acc.problem')}
+              detail={t('acc.problemD')}
               href="/help"
             />
             <Row
               icon={<Bell size={20} />}
-              label="Messages"
-              detail="Money sent, rain marks, answers"
+              label={t('home.messages')}
+              detail={t('acc.msgsD')}
               href="/inbox"
             />
           </div>
@@ -354,7 +364,7 @@ export default async function AccountPage() {
         <div style={{ display: 'grid', gap: 4, justifyItems: 'center', paddingTop: 4 }}>
           <SignOut />
           <span className="small" style={{ fontSize: 13 }}>
-            One mobile number, one account
+            {t('acc.oneAcct')}
           </span>
         </div>
       </div>

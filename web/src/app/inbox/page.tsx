@@ -2,6 +2,8 @@ import { BellOff } from 'lucide-react';
 import { MarkRead } from '@/components/mark-read';
 import { StepBoard } from '@/components/step-board';
 import { serverGet } from '@/lib/server-api';
+import { getT } from '@/i18n/server';
+import type { T } from '@/i18n';
 
 type Note = {
   id: string;
@@ -11,29 +13,28 @@ type Note = {
   createdAt: string;
 };
 
-/** Each message in plain words; unknown kinds fall back to a short generic line. */
-function words(n: Note): [string, string] {
+/** Each message in plain words, in the farmer's language; unknown kinds fall back to a short generic line. */
+function words(n: Note, t: T): [string, string] {
   const b = n.body;
   switch (n.templateCode) {
     case 'POLICY_ISSUED':
-      return ['Your cover has started', `Policy ${b.policy}, cover up to ${b.amount}.`];
+      return [t('n.issuedT'), t('n.issued', { policy: b.policy ?? '', amount: b.amount ?? '' })];
     case 'PAYOUT_TRIGGERED':
-      return [
-        'Rain crossed a mark',
-        `${b.amount} is on its way to your UPI for policy ${b.policy}.`,
-      ];
+      return [t('n.trigT'), t('n.trig', { policy: b.policy ?? '', amount: b.amount ?? '' })];
     case 'PAYOUT_SENT':
       return [
-        'Money sent',
-        `${b.amount} sent to your UPI for policy ${b.policy}.${b.utr ? ` Bank reference ${b.utr}.` : ''}`,
+        t('n.sentT'),
+        `${t('n.sent', { policy: b.policy ?? '', amount: b.amount ?? '' })}${b.utr ? ` ${t('n.utr', { utr: b.utr })}` : ''}`,
       ];
     case 'GRIEVANCE_UPDATE':
       return [
-        b.status === 'RESOLVED' ? `Answer to ${b.ticket}` : `Update on ${b.ticket}`,
+        b.status === 'RESOLVED'
+          ? t('n.answerT', { ticket: b.ticket ?? '' })
+          : t('n.updateT', { ticket: b.ticket ?? '' }),
         b.response ?? '',
       ];
     default:
-      return ['Message from FasalShield', ''];
+      return [t('n.otherT'), ''];
   }
 }
 
@@ -47,18 +48,19 @@ const when = (s: string) =>
 
 export default async function Inbox() {
   const notes = await serverGet<Note[]>('/me/notifications');
+  const { t } = await getT();
   return (
     <main className="screen">
       <StepBoard
-        back={{ href: '/', label: 'Home' }}
-        title="Messages"
-        sub="Money sent, rain marks and answers"
+        back={{ href: '/', label: t('c.home') }}
+        title={t('home.messages')}
+        sub={t('inbox.sub')}
       />
       <div className="work">
         {notes.length ? (
           <ul className="inbox">
             {notes.map((n) => {
-              const [title, text] = words(n);
+              const [title, text] = words(n, t);
               return (
                 <li key={n.id} data-unread={!n.readAt}>
                   <div className="g-head">
@@ -77,7 +79,7 @@ export default async function Inbox() {
         ) : (
           <div className="empty">
             <BellOff size={32} aria-hidden="true" />
-            <p>No messages yet. When money is sent or rain nears a mark, it shows here.</p>
+            <p>{t('inbox.empty')}</p>
           </div>
         )}
       </div>

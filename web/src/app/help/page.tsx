@@ -7,6 +7,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { FormError } from '@/components/form-error';
 import { StepBoard } from '@/components/step-board';
 import { get, messageFor, post } from '@/lib/client';
+import { useT } from '@/i18n/client';
+import type { Key } from '@/i18n';
 
 type Grievance = {
   id: string;
@@ -19,22 +21,12 @@ type Grievance = {
   createdAt: string;
 };
 
-const CATEGORIES: [string, string][] = [
-  ['NO_PAYOUT', 'My crop was hurt but no money came'],
-  ['LATE_PAYOUT', 'Money is late'],
-  ['WRONG_DETAILS', 'My details are wrong'],
-  ['PRIVACY', 'My data or privacy'],
-  ['OTHER', 'Something else'],
-];
-const STATUS: Record<Grievance['status'], string> = {
-  OPEN: 'Received',
-  IN_PROGRESS: 'Being checked',
-  RESOLVED: 'Answered',
-};
+const CATEGORIES = ['NO_PAYOUT', 'LATE_PAYOUT', 'WRONG_DETAILS', 'PRIVACY', 'OTHER'] as const;
 const day = (s: string) =>
   new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
 function Help() {
+  const { t } = useT();
   const policyId = useSearchParams().get('policy') ?? undefined;
   const [items, setItems] = useState<Grievance[] | null>(null);
   const [category, setCategory] = useState(policyId ? 'NO_PAYOUT' : '');
@@ -49,9 +41,8 @@ function Help() {
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
-    if (!category) return setError('Choose what the problem is about.');
-    if (message.trim().length < 10)
-      return setError('Tell us a little more, at least one full sentence.');
+    if (!category) return setError(t('help.chooseErr'));
+    if (message.trim().length < 10) return setError(t('help.moreErr'));
     setBusy(true);
     setError(null);
     try {
@@ -64,7 +55,7 @@ function Help() {
       setMessage('');
       setCategory('');
     } catch (err) {
-      setError(messageFor(err));
+      setError(messageFor(err, t));
     } finally {
       setBusy(false);
     }
@@ -73,9 +64,9 @@ function Help() {
   return (
     <main className="screen">
       <StepBoard
-        back={{ href: '/account', label: 'Account' }}
-        title="Tell us a problem"
-        sub="We answer within 14 days, usually in 2"
+        back={{ href: '/account', label: t('c.account') }}
+        title={t('acc.problem')}
+        sub={t('help.sub')}
       />
       <form className="contents" onSubmit={send} noValidate>
         <div className="work">
@@ -84,16 +75,16 @@ function Help() {
               <Check size={28} aria-hidden="true" color="var(--board)" />
               <div style={{ display: 'grid', gap: 2 }}>
                 <span className="fig" style={{ fontWeight: 600, fontSize: 20 }}>
-                  We got it: {sent.ticketNo}
+                  {t('help.got', { ticket: sent.ticketNo })}
                 </span>
-                <span className="s">The answer will come to your inbox by {day(sent.dueAt)}.</span>
+                <span className="s">{t('help.by', { date: day(sent.dueAt) })}</span>
               </div>
             </div>
           ) : null}
 
           <fieldset className="choice-list">
-            <legend className="label">What is it about</legend>
-            {CATEGORIES.map(([v, label]) => (
+            <legend className="label">{t('help.about')}</legend>
+            {CATEGORIES.map((v) => (
               <label key={v} className="choice" data-on={category === v}>
                 <input
                   type="radio"
@@ -105,21 +96,21 @@ function Help() {
                     setError(null);
                   }}
                 />
-                {label}
+                {t(`cat.${v}` as Key)}
               </label>
             ))}
           </fieldset>
 
           <div>
             <label className="label" htmlFor="msg">
-              What happened
+              {t('help.what')}
             </label>
             <div className="field text area" data-invalid={!!error}>
               <textarea
                 id="msg"
                 rows={4}
                 maxLength={1000}
-                placeholder="For example: heavy rain on 12 July flattened my soybean, but no money came."
+                placeholder={t('help.eg')}
                 value={message}
                 onChange={(e) => {
                   setMessage(e.target.value);
@@ -132,20 +123,20 @@ function Help() {
 
           {items && items.length ? (
             <section className="g-list" aria-label="Your earlier problems">
-              <h2 className="label">Earlier</h2>
+              <h2 className="label">{t('help.earlier')}</h2>
               {items.map((g) => (
                 <article key={g.id} className="g-item">
                   <div className="g-head">
                     <b>{g.ticketNo}</b>
                     <span className={`tag ${g.status === 'RESOLVED' ? '' : 'tag-wait'}`}>
-                      {STATUS[g.status]}
+                      {t(`gs.${g.status}` as Key)}
                     </span>
                   </div>
                   <p className="small">{g.message}</p>
                   {g.response ? (
                     <p className="g-answer">{g.response}</p>
                   ) : (
-                    <p className="small">Answer by {day(g.dueAt)}</p>
+                    <p className="small">{t('help.answerBy', { date: day(g.dueAt) })}</p>
                   )}
                 </article>
               ))}
@@ -153,14 +144,13 @@ function Help() {
           ) : null}
 
           <p className="small">
-            Not happy with our answer? See{' '}
-            <Link href="/legal/grievance">how to complain to the insurer or IRDAI</Link>.
+            {t('help.notHappy')} <Link href="/legal/grievance">{t('help.how')}</Link>.
           </p>
         </div>
         <div className="action">
           <button className="btn" type="submit" disabled={busy}>
             {busy ? <LoaderCircle className="spin" size={22} aria-hidden="true" /> : null}
-            {busy ? 'Sending' : 'Send'}
+            {busy ? t('help.sending') : t('help.send')}
           </button>
         </div>
       </form>

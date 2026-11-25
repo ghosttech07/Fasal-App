@@ -1828,6 +1828,28 @@ a.acc-row {
 }
 
 /* Account: change language */
-.lang-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; color: var(--ink); font-size: 17px; }
-.lang-row span { flex: 1; }
-.lang-row select { font: inherit; font-size: 17px; padding: 8px 10px; border: 1.5px solid var(--field); border-radius: 8px; background: var(--surface); color: var(--ink); min-height: 44px; }
+.lang-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: 17px;
+}
+.lang-row span {
+  flex: 1;
+}
+.lang-row select {
+  font: inherit;
+  font-size: 17px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--field);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  min-height: 44px;
+}

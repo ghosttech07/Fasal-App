@@ -44,7 +44,7 @@ export default function CropPage() {
         setSeason(s[0]?.code ?? null);
         setPlot(p[0] ?? null);
       })
-      .catch((e) => setError(messageFor(e)));
+      .catch((e) => setError(messageFor(e, t)));
   }, []);
 
   const name = crops.find((c) => c.code === crop);

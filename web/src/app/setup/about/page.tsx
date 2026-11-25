@@ -51,7 +51,7 @@ export default function AboutPage() {
         }
         setVillage(m.village ?? '');
       })
-      .catch((e) => setError(messageFor(e)));
+      .catch((e) => setError(messageFor(e, t)));
   }, []);
 
   const districts = INDIA_STATES.find((s) => s.code === stateCode)?.districts ?? [];
@@ -103,7 +103,7 @@ export default function AboutPage() {
       });
       router.push('/setup/field');
     } catch (err) {
-      setError(messageFor(err));
+      setError(messageFor(err, t));
       setBusy(false);
     }
   }

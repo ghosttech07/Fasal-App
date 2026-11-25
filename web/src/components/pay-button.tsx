@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { messageFor, post } from '@/lib/client';
 import { FormError } from './form-error';
+import { useT } from '@/i18n/client';
 
 export function PayButton({
   id,
@@ -18,6 +19,7 @@ export function PayButton({
   opens: string;
 }) {
   const router = useRouter();
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   return (
@@ -34,7 +36,7 @@ export function PayButton({
             await post(`/api/fs/policies/${id}/pay`);
             router.replace(`/cover/done/${id}`);
           } catch (e) {
-            setError(messageFor(e));
+            setError(messageFor(e, t));
             setBusy(false);
           }
         }}

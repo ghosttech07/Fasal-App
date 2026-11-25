@@ -31,7 +31,7 @@ export default function UpiPage() {
       const me = await post<Me>('/api/fs/me/wallets', { vpa: vpa.trim() });
       setChecked(me.wallet);
     } catch (err) {
-      setError(messageFor(err));
+      setError(messageFor(err, t));
     } finally {
       setBusy(false);
     }

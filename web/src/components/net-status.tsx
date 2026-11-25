@@ -2,12 +2,14 @@
 
 import { Wifi, WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useT } from '@/i18n/client';
 
 /**
  * Connection strip. It sits in the page flow (sticky, not floating), so it pushes the screen down instead of
  * covering any text. "Back online" shows for 2.5 s after the connection returns.
  */
 export function NetStatus() {
+  const { t } = useT();
   const [state, setState] = useState<'online' | 'offline' | 'back'>('online');
 
   useEffect(() => {
@@ -36,9 +38,7 @@ export function NetStatus() {
       ) : (
         <Wifi size={18} aria-hidden="true" />
       )}
-      {state === 'offline'
-        ? 'No internet. Check your signal; we will try again on our own.'
-        : 'Back online'}
+      {state === 'offline' ? t('net.offline') : t('net.back')}
     </div>
   );
 }

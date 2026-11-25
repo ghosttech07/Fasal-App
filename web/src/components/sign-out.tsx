@@ -2,8 +2,10 @@
 
 import { LogOut } from 'lucide-react';
 import { post } from '@/lib/client';
+import { useT } from '@/i18n/client';
 
 export function SignOut() {
+  const { t } = useT();
   return (
     <button
       className="btn btn-quiet"
@@ -14,7 +16,7 @@ export function SignOut() {
       }}
     >
       <LogOut size={20} aria-hidden="true" />
-      Sign out
+      {t('c.signOut')}
     </button>
   );
 }
