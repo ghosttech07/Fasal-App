@@ -63,4 +63,41 @@ for (const lang of langs) {
   }
 }
 console.log(`legal pages: ${langs.length} languages checked against English`);
+
+// Landing page (public/welcome): each language file has exactly the English keys, the same {n} and
+// [BRACKETED] items, and every key the page asks for exists.
+const { runInNewContext } = await import('node:vm');
+const welcome = fileURLToPath(new URL('../public/welcome/', import.meta.url));
+const landing = (lang) => {
+  const window = {};
+  runInNewContext(readFileSync(join(welcome, 'lang', `${lang}.js`), 'utf8'), { window });
+  return window.FS_T;
+};
+const marks = (s) =>
+  [...s.matchAll(/\{n\}|\[[A-Z][A-Z .\/]+\]|<span class="(?:gold|hi)">/g)].map((m) => m[0]).sort().join('|');
+const landEn = landing('en');
+const page = readFileSync(join(welcome, 'index.html'), 'utf8');
+for (const [, k] of page.matchAll(/data-t[hal]?="(\w+)"/g))
+  if (!(k in landEn)) {
+    problems++;
+    console.log(`landing: index.html asks for "${k}", which en.js does not have`);
+  }
+for (const lang of langs) {
+  const t = landing(lang);
+  for (const k of Object.keys(landEn)) {
+    if (typeof t[k] !== 'string' || !t[k].trim()) {
+      problems++;
+      console.log(`landing ${lang}: missing ${k}`);
+    } else if (marks(t[k]) !== marks(landEn[k])) {
+      problems++;
+      console.log(`landing ${lang}: ${k} has ${marks(t[k])} but English has ${marks(landEn[k])}`);
+    }
+  }
+  for (const k of Object.keys(t))
+    if (!(k in landEn)) {
+      problems++;
+      console.log(`landing ${lang}: ${k} is not an English key`);
+    }
+}
+console.log(`landing page: ${langs.length} languages × ${Object.keys(landEn).length} strings checked`);
 process.exit(problems ? 1 : 0);
