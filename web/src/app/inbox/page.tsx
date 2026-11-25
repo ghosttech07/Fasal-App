@@ -38,8 +38,9 @@ function words(n: Note, t: T): [string, string] {
   }
 }
 
-const when = (s: string) =>
-  new Date(s).toLocaleString('en-IN', {
+const when = (s: string, lang: string) =>
+  new Date(s).toLocaleString(`${lang}-IN`, {
+    numberingSystem: 'latn',
     day: 'numeric',
     month: 'short',
     hour: 'numeric',
@@ -48,7 +49,7 @@ const when = (s: string) =>
 
 export default async function Inbox() {
   const notes = await serverGet<Note[]>('/me/notifications');
-  const { t } = await getT();
+  const { t, lang } = await getT();
   return (
     <main className="screen">
       <StepBoard
@@ -65,7 +66,7 @@ export default async function Inbox() {
                 <li key={n.id} data-unread={!n.readAt}>
                   <div className="g-head">
                     <b>{title}</b>
-                    <span className="small">{when(n.createdAt)}</span>
+                    <span className="small">{when(n.createdAt, lang)}</span>
                   </div>
                   {text ? (
                     <p className="small" style={{ color: 'var(--ink)' }}>

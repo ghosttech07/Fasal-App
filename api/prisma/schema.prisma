@@ -229,6 +229,9 @@ model Plot {
   checkNote          String? // why it was flagged, or the reviewer's note
   checkedById        String?
   checkedAt          DateTime?
+  cropStatus         String? // satellite crop check: GREEN | SPARSE | BARE | UNKNOWN (cloudy / no scene)
+  cropNdvi           Float? // best NDVI over recent clear Sentinel-2 scenes at the pin
+  cropSceneAt        DateTime? // date of that scene
   createdAt          DateTime @default(now())
   policies           Policy[]
 

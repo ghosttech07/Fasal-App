@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Mark } from '@/components/mark';
 import { SignOut } from '@/components/sign-out';
 import { serverGet } from '@/lib/server-api';
+import { getT } from '@/i18n/server';
 
 type Me = {
   name: string;
@@ -37,6 +38,7 @@ export default async function AgentHome() {
     serverGet<Me>('/agent/me'),
     serverGet<Row[]>('/agent/farmers'),
   ]);
+  const { t } = await getT();
   return (
     <main className="screen">
       <section className="board" aria-labelledby="ag-h">
@@ -44,31 +46,29 @@ export default async function AgentHome() {
         <h1 id="ag-h" className="board-title">
           {me.name}
         </h1>
-        <p className="board-sub">
-          Field agent {me.code} · {me.org}
-        </p>
+        <p className="board-sub">{t('ag.role', { code: me.code, org: me.org })}</p>
         <dl className="tally">
           <div>
-            <dt>Farmers</dt>
+            <dt>{t('ag.farmers')}</dt>
             <dd>{me.counts.farmers}</dd>
           </div>
           <div>
-            <dt>Field pinned</dt>
+            <dt>{t('ag.pinned')}</dt>
             <dd>{me.counts.withField}</dd>
           </div>
           <div>
-            <dt>Covered</dt>
+            <dt>{t('ag.covered')}</dt>
             <dd>{me.counts.covered}</dd>
           </div>
         </dl>
       </section>
 
       <div className="work" style={{ gap: 16 }}>
-        <h2 className="h2">Your farmers</h2>
+        <h2 className="h2">{t('ag.yours')}</h2>
         {farmers.length === 0 ? (
           <div className="empty">
             <UserPlus size={32} aria-hidden="true" />
-            <p>No farmers yet. Enrol the first one: it takes about three minutes with them.</p>
+            <p>{t('ag.empty')}</p>
           </div>
         ) : (
           <div className="acc-list">
@@ -85,10 +85,10 @@ export default async function AgentHome() {
                   <span className="ag-steps">
                     <Step
                       ok={f.fields > 0}
-                      label={f.fields ? `${f.acres.toFixed(1)} acres` : 'Field'}
+                      label={f.fields ? t('ag.acres', { n: f.acres.toFixed(1) }) : t('ag.field')}
                     />
-                    <Step ok={!!f.upi} label="UPI" />
-                    <Step ok={f.covers > 0} label="Cover" />
+                    <Step ok={!!f.upi} label={t('ag.upi')} />
+                    <Step ok={f.covers > 0} label={t('ag.cover')} />
                   </span>
                 </span>
                 <ChevronRight size={20} aria-hidden="true" color="var(--ink-2)" />
@@ -103,7 +103,7 @@ export default async function AgentHome() {
 
       <div className="action">
         <Link className="btn" href="/agent/new">
-          <UserPlus size={22} aria-hidden="true" /> Enrol a farmer
+          <UserPlus size={22} aria-hidden="true" /> {t('ag.enrol')}
         </Link>
       </div>
     </main>

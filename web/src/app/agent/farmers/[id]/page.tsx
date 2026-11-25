@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { StepBoard } from '@/components/step-board';
 import { day } from '@/lib/format';
 import { serverGet } from '@/lib/server-api';
+import { getT } from '@/i18n/server';
 import { LANGUAGES, isLanguageCode } from '@fasalshield/shared';
 
 type Detail = {
@@ -62,10 +63,11 @@ export default async function AgentFarmer({ params }: { params: Promise<{ id: st
   const f = await serverGet<Detail>(`/agent/farmers/${id}`);
   const lang = isLanguageCode(f.language) ? LANGUAGES[f.language].nativeName : f.language;
   const ready = f.plots.length > 0 && !!f.wallet;
+  const { t, lang: ui } = await getT();
   return (
     <main className="screen">
       <StepBoard
-        back={{ href: '/agent', label: 'Your farmers' }}
+        back={{ href: '/agent', label: t('ag.back') }}
         title={f.name ?? f.code}
         sub={`${f.code} · ${f.village ?? ''} · ${f.phone}`}
       />
@@ -74,42 +76,42 @@ export default async function AgentFarmer({ params }: { params: Promise<{ id: st
           <Item
             done
             icon={<UserCheck size={20} />}
-            title="Enrolled"
-            detail={`Consent given · language ${lang}`}
+            title={t('ag.enrolled')}
+            detail={t('ag.consentLang', { lang })}
           />
           <Item
             done={f.plots.length > 0}
             icon={<MapPin size={20} />}
-            title="Field pinned"
+            title={t('ag.fieldPinned')}
             detail={
               f.plots.length
                 ? f.plots
                     .map(
                       (p) =>
-                        `${(p.areaAcres ?? 0).toFixed(1)} acres · ±${Math.round(p.gpsAccuracyM ?? 0)} m · ${day(p.createdAt)}${p.status === 'FLAGGED' ? ' · flagged for a land check' : ''}`,
+                        `${t('ag.fieldLine', { acres: (p.areaAcres ?? 0).toFixed(1), m: Math.round(p.gpsAccuracyM ?? 0), date: day(p.createdAt, false, ui) })}${p.status === 'FLAGGED' ? t('ag.flagged') : ''}`,
                     )
                     .join(' / ')
-                : 'Stand in the field with the farmer and pin it by GPS.'
+                : t('ag.pinHow')
             }
             action={
               <Link className="link" href={`/agent/farmers/${f.id}/field`}>
-                {f.plots.length ? 'Pin another field' : 'Pin the field now'}
+                {f.plots.length ? t('ag.pinAnother') : t('ag.pinNow')}
               </Link>
             }
           />
           <Item
             done={!!f.wallet}
             icon={<Landmark size={20} />}
-            title="UPI for payouts"
+            title={t('acc.upi')}
             detail={
               f.wallet
                 ? `${f.wallet.handleMasked} · ${f.wallet.verifiedName ?? ''}`
-                : 'The farmer’s own UPI ID, in their name.'
+                : t('ag.upiHow')
             }
             action={
               f.wallet ? null : (
                 <Link className="link" href={`/agent/farmers/${f.id}/upi`}>
-                  Link UPI now
+                  {t('ag.linkUpi')}
                 </Link>
               )
             }
@@ -117,18 +119,11 @@ export default async function AgentFarmer({ params }: { params: Promise<{ id: st
           <Item
             done={false}
             icon={ready ? <Smartphone size={20} /> : <CircleDashed size={20} />}
-            title="Farmer buys cover on their phone"
-            detail={
-              ready
-                ? 'Ask the farmer to open FasalShield and sign in with their number. Their setup is done; they choose a crop and pay from their own UPI.'
-                : 'After the field and UPI are done.'
-            }
+            title={t('ag.buys')}
+            detail={ready ? t('ag.buysReady') : t('ag.buysWait')}
           />
         </div>
-        <p className="small">
-          You never collect money. The farmer pays the premium from their own UPI app, and payouts
-          go only to their UPI ID.
-        </p>
+        <p className="small">{t('ag.noMoney')}</p>
       </div>
     </main>
   );

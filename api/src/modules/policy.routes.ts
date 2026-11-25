@@ -1,3 +1,4 @@
+import { placeKeys } from '@fasalshield/shared/geo';
 import { Router } from 'express';
 import { z } from 'zod';
 import { applyBasisPoints, formatPaise } from '@fasalshield/shared';
@@ -21,8 +22,21 @@ policyRouter.get('/catalog/crops', async (_req, res) => {
   res.json(await prisma.crop.findMany({ orderBy: { code: 'asc' } }));
 });
 
+/** Open seasons, each with the crops that have a cover open for enrolment now. */
 policyRouter.get('/catalog/seasons', async (_req, res) => {
-  res.json(await prisma.season.findMany({ where: { endDate: { gte: todayDate() } }, orderBy: { startDate: 'asc' } }));
+  const [seasons, versions] = await Promise.all([
+    prisma.season.findMany({ where: { endDate: { gte: todayDate() } }, orderBy: { startDate: 'asc' } }),
+    prisma.productVersion.findMany({
+      where: { status: 'PUBLISHED', enrolmentCutoff: { gte: todayDate() } },
+      select: { seasonCode: true, eligibleCrops: true },
+    }),
+  ]);
+  res.json(
+    seasons.map((s) => ({
+      ...s,
+      crops: [...new Set(versions.filter((v) => v.seasonCode === s.code).flatMap((v) => v.eligibleCrops))],
+    })),
+  );
 });
 
 // shortcut: plots saved before acreage was required count as 1 acre; drop once every plot has areaAcres.
@@ -40,7 +54,7 @@ policyRouter.post('/quotes', async (req, res) => {
       status: 'PUBLISHED',
       seasonCode: input.seasonCode,
       eligibleCrops: { has: input.cropCode },
-      eligibleDistricts: { hasSome: [plot.farmer.districtCode ?? '', '*'] }, // '*' = every district of India
+      eligibleDistricts: { hasSome: placeKeys(plot.farmer.districtCode) }, // district, its state ('MH-*') or all India ('*')
       enrolmentCutoff: { gte: todayDate() },
     },
     include: { product: true },
@@ -78,11 +92,14 @@ policyRouter.post('/policies', async (req, res) => {
   const input = body(req, z.object({ productVersionId: z.string().uuid(), plotId: z.string().uuid(), cropCode: z.string().min(2) }));
   const farmerId = req.principal!.sub;
   const [plot, version] = await Promise.all([
-    prisma.plot.findFirst({ where: { id: input.plotId, farmerId } }),
+    prisma.plot.findFirst({ where: { id: input.plotId, farmerId }, include: { farmer: { select: { districtCode: true } } } }),
     prisma.productVersion.findFirst({ where: { id: input.productVersionId, status: 'PUBLISHED', enrolmentCutoff: { gte: todayDate() } } }),
   ]);
   if (!plot) throw new HttpError(404, 'plot_not_found');
-  if (!version || !version.eligibleCrops.includes(input.cropCode)) throw new HttpError(422, 'product_not_eligible');
+  // Same rule as the quote: the crop and the farmer's place must be covered by this version.
+  const placeOk = placeKeys(plot.farmer.districtCode).some((k) => version?.eligibleDistricts.includes(k));
+  if (!version || !version.eligibleCrops.includes(input.cropCode) || !placeOk)
+    throw new HttpError(422, 'product_not_eligible');
 
   const existing = await prisma.policy.findFirst({
     where: { plotId: plot.id, productVersionId: version.id, status: { notIn: ['CANCELLED', 'EXPIRED'] } },

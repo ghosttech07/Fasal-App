@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
 import { formatPaise, phoneE164IndiaSchema } from '@fasalshield/shared';
+import { isPlaceEntry } from '@fasalshield/shared/geo';
 import { prisma } from '../../db';
 import { env } from '../../env';
 import { payments, weather } from '../../adapters';
@@ -13,6 +14,7 @@ import { hashPassword } from '../../lib/staff-auth';
 import { rulesSchema } from '../../rules/engine';
 import { requireFreshCode } from '../staff.routes';
 import { loadNormals } from '../triggers/service';
+import { cropCheck } from '../../adapters/sentinel';
 import { randomBytes } from 'node:crypto';
 
 /**
@@ -276,6 +278,12 @@ portalRouter.post('/products/:id/versions', requireStaff(...WRITE_PRODUCTS), asy
       subsidyBp: z.number().int().min(0).max(10_000),
       enrolmentCutoff: isoDate,
       waitingPeriodDays: z.number().int().min(0).max(60),
+      // Where the version is open: '*' (all India), '<STATE>-*' or district codes. Omitted = same as before.
+      eligibleDistricts: z
+        .array(z.string().trim().refine(isPlaceEntry, 'Unknown state or district'))
+        .min(1)
+        .max(800)
+        .optional(),
       phases: z
         .array(
           z.object({
@@ -334,7 +342,7 @@ portalRouter.post('/products/:id/versions', requireStaff(...WRITE_PRODUCTS), asy
       subsidyBp: input.subsidyBp,
       sumInsuredPaise: input.sumInsuredPaise,
       seasonCode: input.seasonCode,
-      eligibleDistricts: from.eligibleDistricts,
+      eligibleDistricts: input.eligibleDistricts ?? from.eligibleDistricts,
       eligibleCrops: from.eligibleCrops,
       enrolmentCutoff: new Date(`${input.enrolmentCutoff}T00:00:00Z`),
       waitingPeriodDays: input.waitingPeriodDays,
@@ -1352,6 +1360,7 @@ portalRouter.get('/fields', requireStaff(...READ_CASES), async (req, res) => {
       gridCellId: p.gridCellId,
       createdAt: p.createdAt,
       checkedAt: p.checkedAt,
+      crop: p.cropStatus ? { status: p.cropStatus, ndvi: p.cropNdvi, sceneAt: p.cropSceneAt } : null,
       farmer: {
         id: p.farmer.id,
         code: p.farmer.farmerCode,
@@ -1483,4 +1492,30 @@ portalRouter.patch('/agents/:id', requireStaff('SYS_ADMIN'), async (req, res) =>
     );
   });
   res.json({ ok: true });
+});
+
+/**
+ * Satellite crop check for one field: is a crop growing at the pin? Uses the newest clear Sentinel-2 scene
+ * (free). Saved on the field and audited; staff use it next to the land-record check.
+ */
+portalRouter.post('/fields/:id/crop-check', requireStaff(...HANDLE_CASES), async (req, res) => {
+  const plot = await prisma.plot.findUnique({ where: { id: String(req.params.id) } });
+  if (!plot) throw new HttpError(404, 'not_found');
+  let result;
+  try {
+    result = await cropCheck(plot.lat, plot.lng);
+  } catch {
+    throw new HttpError(502, 'satellite_unavailable');
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.plot.update({
+      where: { id: plot.id },
+      data: { cropStatus: result.status, cropNdvi: result.ndvi, cropSceneAt: result.sceneAt ? new Date(result.sceneAt) : null },
+    });
+    await audit(
+      { actorType: 'STAFF', actorId: me(req).sub, action: 'FIELD_CROP_CHECKED', entityType: 'Plot', entityId: plot.id, diff: { status: result.status, ndvi: result.ndvi } },
+      tx,
+    );
+  });
+  res.json(result);
 });

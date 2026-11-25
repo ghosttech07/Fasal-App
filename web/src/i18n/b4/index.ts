@@ -1,0 +1,11 @@
+export { as } from './as';
+export { bn } from './bn';
+export { gu } from './gu';
+export { hi } from './hi';
+export { kn } from './kn';
+export { ml } from './ml';
+export { mr } from './mr';
+export { or } from './or';
+export { pa } from './pa';
+export { ta } from './ta';
+export { te } from './te';

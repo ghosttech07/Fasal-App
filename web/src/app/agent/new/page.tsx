@@ -78,7 +78,7 @@ export default function EnrolFarmer() {
     } catch (err) {
       setError(
         err instanceof ApiError && err.code === 'farmer_exists'
-          ? 'This number is already registered. The farmer can sign in with it on their own phone.'
+          ? t('ag.exists')
           : messageFor(err, t),
       );
       setBusy(false);
@@ -90,14 +90,14 @@ export default function EnrolFarmer() {
       <StepBoard
         back={{ href: '/agent', label: t('c.back') }}
         step={1}
-        title="Enrol a farmer"
-        sub="With the farmer next to you · about three minutes"
+        title={t('ag.enrol')}
+        sub={t('ag.enrolSub')}
       />
       <form className="contents" onSubmit={save} noValidate>
         <div className="work">
           <div>
             <label className="label" htmlFor="phone">
-              Farmer’s mobile number
+              {t('ag.phone')}
             </label>
             <div className="field">
               <span className="prefix" aria-hidden="true">
@@ -113,14 +113,12 @@ export default function EnrolFarmer() {
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
               />
             </div>
-            <p className="small">
-              The farmer signs in with this number later to buy cover and get paid.
-            </p>
+            <p className="small">{t('ag.phoneHint')}</p>
           </div>
 
           <div>
             <label className="label" htmlFor="name">
-              Farmer’s full name
+              {t('ag.name')}
             </label>
             <div className="field text">
               <input
@@ -134,7 +132,7 @@ export default function EnrolFarmer() {
 
           <fieldset className="place">
             <legend className="h2" style={{ fontSize: 20 }}>
-              Where is the farm
+              {t('ag.where')}
             </legend>
             <button
               className="btn btn-line"
@@ -216,7 +214,7 @@ export default function EnrolFarmer() {
 
           <div>
             <label className="label" htmlFor="lang">
-              Farmer’s language
+              {t('ag.lang')}
             </label>
             <div className="field">
               <select
@@ -233,23 +231,22 @@ export default function EnrolFarmer() {
               </select>
               <ChevronDown size={20} aria-hidden="true" color="var(--ink-2)" />
             </div>
-            <p className="small">Their app, messages and SMS will be in this language.</p>
+            <p className="small">{t('ag.langHint')}</p>
           </div>
 
           <div className="consent">
             <strong>
               <ShieldCheck size={22} aria-hidden="true" color="var(--board)" />
-              Read this to the farmer
+              {t('ag.readThis')}
             </strong>
-            “We use your name, phone and field location only to give you cover and send you money.
-            Only your insurer sees it. You can ask us to delete it.”
+            {t('ag.notice')}
             <label className="check">
               <input
                 type="checkbox"
                 checked={consent}
                 onChange={(e) => setConsent(e.target.checked)}
               />
-              The farmer heard this in their language and agrees
+              {t('ag.agrees')}
             </label>
           </div>
           {error ? <FormError>{error}</FormError> : null}
@@ -261,7 +258,7 @@ export default function EnrolFarmer() {
             ) : (
               <Check size={22} aria-hidden="true" />
             )}
-            {busy ? t('c.saving') : 'Enrol and pin the field'}
+            {busy ? t('c.saving') : t('ag.enrolBtn')}
             {busy ? null : <ArrowRight size={22} aria-hidden="true" />}
           </button>
         </div>

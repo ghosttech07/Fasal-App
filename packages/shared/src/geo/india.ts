@@ -54,3 +54,19 @@ export function findDistrict(code: string) {
   const district = state?.districts.find((d) => districtCode(state.code, d) === code);
   return state && district ? { state, district } : null;
 }
+/**
+ * Cover eligibility by place. An entry is '*' (all of India), '<STATE>-*' (a whole state, e.g. "MH-*")
+ * or one district code (e.g. "MH-LATUR").
+ */
+export function isPlaceEntry(entry: string): boolean {
+  if (entry === '*') return true;
+  if (entry.endsWith('-*')) return INDIA_STATES.some((s) => `${s.code}-*` === entry);
+  return findDistrict(entry) !== null;
+}
+
+/** The entries that make a cover open to this district: itself, its whole state, or all of India. */
+export function placeKeys(districtCode: string | null | undefined): string[] {
+  if (!districtCode) return ['*'];
+  const state = districtCode.split('-')[0];
+  return [districtCode, `${state}-*`, '*'];
+}

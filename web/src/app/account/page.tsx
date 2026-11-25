@@ -89,7 +89,7 @@ export default async function AccountPage() {
     serverGet<Plot[]>('/me/plots'),
     serverGet<Policy[]>('/policies'),
   ]);
-  const { t } = await getT();
+  const { t, lang } = await getT();
   const S = t('c.soon');
   const phone = me.phone.replace(/^\+91(\d{5})(\d{5})$/, '+91 $1 $2');
   const initials = (me.name ?? '?')
@@ -237,7 +237,9 @@ export default async function AccountPage() {
                 <span className="tag tag-warn">
                   {t('pol.belowNormal', { pct: num1(phase.indexValue) })}
                 </span>
-                <span className="small">{t('acc.updated', { date: day(new Date()) })}</span>
+                <span className="small">
+                  {t('acc.updated', { date: day(new Date(), false, lang) })}
+                </span>
               </div>
             </Link>
           ) : (
@@ -271,7 +273,7 @@ export default async function AccountPage() {
                 key={p.id}
                 icon={<MapPin size={20} />}
                 label={`${t('acc.field', { n: i + 1 })} · ${p.areaAcres ? `${p.areaAcres.toFixed(1)} ${t('field.acres')}` : t('acc.sizeNotSet')}`}
-                detail={`${me.village ?? ''} · ${t('acc.added', { date: day(p.createdAt) })}`}
+                detail={`${me.village ?? ''} · ${t('acc.added', { date: day(p.createdAt, false, lang) })}`}
                 state={p.captureMethod === 'GPS_PIN' ? 'done' : 'warn'}
                 status={
                   p.captureMethod === 'GPS_PIN' && p.gpsAccuracyM

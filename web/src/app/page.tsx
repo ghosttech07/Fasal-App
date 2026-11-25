@@ -44,7 +44,7 @@ export default async function Home() {
   const { t, lang } = await getT();
   const live = policies.filter((p) => p.status === 'ACTIVE' || p.status === 'IN_WAITING');
   return live.length ? (
-    <RainBoard me={me} policies={live} t={t} />
+    <RainBoard me={me} policies={live} t={t} lang={lang} />
   ) : (
     <BeforeBuying me={me} plot={plots[0]} season={seasons[0]} t={t} lang={lang} />
   );
@@ -122,7 +122,7 @@ function currentPhase(p: Policy) {
   );
 }
 
-function RainBoard({ me, policies, t }: { me: Me; policies: Policy[]; t: T }) {
+function RainBoard({ me, policies, t, lang }: { me: Me; policies: Policy[]; t: T; lang: string }) {
   const p = policies[0]!;
   const phase = currentPhase(p);
   const plan = p.phasePlan.find((x) => x.id === phase?.phaseId);
@@ -148,7 +148,7 @@ function RainBoard({ me, policies, t }: { me: Me; policies: Policy[]; t: T }) {
             {phase.state === 'IN_PROGRESS'
               ? t('home.dayOf', { d: phase.daysElapsed, n: daysBetween(plan.from, plan.to) })
               : phase.state === 'UPCOMING'
-                ? t('home.starts', { date: day(plan.from) })
+                ? t('home.starts', { date: day(plan.from, false, lang) })
                 : t('home.ended')}
           </span>
         ) : null}
@@ -163,7 +163,7 @@ function RainBoard({ me, policies, t }: { me: Me; policies: Policy[]; t: T }) {
           />
         ) : (
           <p className="board-title" style={{ fontSize: 26 }}>
-            {t('home.notYet', { date: plan ? day(plan.from) : '' })}
+            {t('home.notYet', { date: plan ? day(plan.from, false, lang) : '' })}
           </p>
         )}
       </section>
@@ -179,7 +179,12 @@ function RainBoard({ me, policies, t }: { me: Me; policies: Policy[]; t: T }) {
               <span className="s">
                 {t('home.approved', {
                   when: due
-                    ? `${day(due)}, ${new Date(due).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })}`
+                    ? `${day(due, false, lang)}, ${new Date(due).toLocaleTimeString(`${lang}-IN`, {
+                        numberingSystem: 'latn',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        timeZone: 'Asia/Kolkata',
+                      })}`
                     : t('home.tomorrow'),
                 })}
               </span>

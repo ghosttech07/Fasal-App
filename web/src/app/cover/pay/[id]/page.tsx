@@ -12,7 +12,7 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
   if (p.status !== 'PENDING_PAYMENT') redirect(`/cover/done/${id}`);
   const net = p.premiumPaise - p.subsidyPaise;
   const end = p.phasePlan.at(-1)?.to;
-  const { t } = await getT();
+  const { t, lang } = await getT();
 
   return (
     <main className="screen">
@@ -65,7 +65,9 @@ export default async function PayPage({ params }: { params: Promise<{ id: string
           {end ? (
             <div>
               <span className="k">{t('pay.runs')}</span>
-              <span style={{ fontWeight: 500 }}>{t('pay.todayTo', { date: day(end, true) })}</span>
+              <span style={{ fontWeight: 500 }}>
+                {t('pay.todayTo', { date: day(end, true, lang) })}
+              </span>
             </div>
           ) : null}
         </div>

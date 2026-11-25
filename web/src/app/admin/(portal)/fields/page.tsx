@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { adminGet, can, currentStaff, districtName, when } from '@/lib/admin';
-import { CheckField } from '@/components/admin/actions';
+import { CheckField, CropCheck } from '@/components/admin/actions';
 import { PageHead, Status, Unavailable } from '@/components/admin/ui';
 
 type Row = {
@@ -14,6 +14,7 @@ type Row = {
   accuracyM: number | null;
   createdAt: string;
   checkedAt: string | null;
+  crop: { status: string; ndvi: number | null; sceneAt: string | null } | null;
   farmer: {
     id: string;
     code: string;
@@ -21,6 +22,14 @@ type Row = {
     district: string | null;
     village: string | null;
   };
+};
+
+/** NDVI from the newest clear Sentinel-2 scene: ≥ 0.4 a growing crop, 0.2–0.4 sparse or just sown, below 0.2 bare. */
+const CROP: Record<string, { text: string; tone: '' | 'warn' | 'bad' | 'plain' }> = {
+  GREEN: { text: 'Crop growing', tone: '' },
+  SPARSE: { text: 'Sparse / just sown', tone: 'warn' },
+  BARE: { text: 'Bare land', tone: 'bad' },
+  UNKNOWN: { text: 'Cloudy, no reading', tone: 'plain' },
 };
 
 const FILTERS: [string, string][] = [
@@ -31,7 +40,7 @@ const FILTERS: [string, string][] = [
 ];
 
 /**
- * Land checks: staff compare each field with the 7/12 land record (owner name, survey number, area).
+ * Land checks: staff compare each field with the state land record (owner name, survey number, area).
  * Fields flagged by the automatic duplicate checks come first.
  */
 export default async function Fields({
@@ -50,7 +59,7 @@ export default async function Fields({
     <>
       <PageHead
         title="Land checks"
-        sub="Check each field against its 7/12 extract on the Mahabhumi portal: owner name, survey number and area."
+        sub="Check each field against the state land record (7/12 in Maharashtra, Khatauni in UP, RTC in Karnataka…): owner name, survey number and area. The satellite column shows whether a crop is growing at the pin."
       />
       <nav className="adm-tools" aria-label="Filter">
         {FILTERS.map(([v, l]) => (
@@ -72,6 +81,7 @@ export default async function Fields({
                 <th>Survey no.</th>
                 <th className="num">Acres</th>
                 <th>GPS pin</th>
+                <th>Crop seen by satellite</th>
                 <th>Status</th>
                 <th>{mayCheck ? 'Check' : 'Note'}</th>
               </tr>
@@ -105,6 +115,26 @@ export default async function Fields({
                       </span>
                     </td>
                     <td>
+                      {p.crop ? (
+                        <>
+                          <span className={`adm-tag ${CROP[p.crop.status]?.tone ?? 'plain'}`}>
+                            {CROP[p.crop.status]?.text ?? p.crop.status}
+                          </span>
+                          <br />
+                          <span className="adm-muted">
+                            {p.crop.ndvi !== null
+                              ? `NDVI ${p.crop.ndvi.toFixed(2)}`
+                              : 'No clear scene'}
+                            {p.crop.sceneAt ? ` · ${when(p.crop.sceneAt)}` : ''}
+                          </span>
+                          <br />
+                        </>
+                      ) : (
+                        <span className="adm-muted">Not checked</span>
+                      )}
+                      {mayCheck ? <CropCheck id={p.id} again={!!p.crop} /> : null}
+                    </td>
+                    <td>
                       <Status value={p.status} />
                       {p.note ? (
                         <>
@@ -126,7 +156,7 @@ export default async function Fields({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="adm-empty">
+                  <td colSpan={7} className="adm-empty">
                     Nothing here.
                   </td>
                 </tr>

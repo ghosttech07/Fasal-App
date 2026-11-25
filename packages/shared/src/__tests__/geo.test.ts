@@ -1,4 +1,4 @@
-import { INDIA_STATES, districtCode, findDistrict } from '../geo/india';
+import { INDIA_STATES, districtCode, findDistrict , isPlaceEntry, placeKeys } from '../geo/india';
 
 describe('India states and districts', () => {
   it('has every state and union territory, with current district names', () => {
@@ -15,5 +15,19 @@ describe('India states and districts', () => {
     const all = INDIA_STATES.flatMap((s) => s.districts.map((d) => districtCode(s.code, d)));
     expect(new Set(all).size).toBe(all.length);
     for (const code of all) expect(findDistrict(code)).not.toBeNull();
+  });
+});
+
+describe('cover eligibility by place', () => {
+  it('accepts all-India, whole-state and district entries only', () => {
+    expect(isPlaceEntry('*')).toBe(true);
+    expect(isPlaceEntry('MH-*')).toBe(true);
+    expect(isPlaceEntry('MH-LATUR')).toBe(true);
+    expect(isPlaceEntry('XX-*')).toBe(false);
+    expect(isPlaceEntry('MH-NOWHERE')).toBe(false);
+  });
+  it('a district matches itself, its state and all of India', () => {
+    expect(placeKeys('TN-MADURAI')).toEqual(['TN-MADURAI', 'TN-*', '*']);
+    expect(placeKeys(null)).toEqual(['*']);
   });
 });

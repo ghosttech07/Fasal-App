@@ -5,14 +5,15 @@ const inr = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
 /** 1500000 paise → "₹15,000" (whole rupees, Indian grouping). */
 export const rupees = (paise: number) => `₹${inr.format(Math.round(paise / 100))}`;
 
-/** "2026-11-01" → "1 Nov" (or "1 Nov 2026" with year). */
-export function day(iso: string | Date, year = false) {
+/** "2026-11-01" → "1 Nov" (or "1 Nov 2026" with year), month name in the farmer's language; digits stay 0-9. */
+export function day(iso: string | Date, year = false, lang = 'en') {
   const d = typeof iso === 'string' ? new Date(iso.length === 10 ? `${iso}T00:00:00Z` : iso) : iso;
-  return d.toLocaleDateString('en-IN', {
+  return d.toLocaleDateString(`${lang}-IN`, {
     day: 'numeric',
     month: 'short',
     ...(year ? { year: 'numeric' } : {}),
     timeZone: 'Asia/Kolkata',
+    numberingSystem: 'latn',
   });
 }
 

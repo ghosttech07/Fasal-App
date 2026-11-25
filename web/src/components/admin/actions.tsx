@@ -43,7 +43,8 @@ const MESSAGES: Record<string, string> = {
   account_locked: 'Too many wrong codes. Your account is locked for 15 minutes.',
   staff_session_required: 'Your session ended. Sign in again.',
   network: 'No connection. Check your internet and try again.',
-  validation_failed: 'Please check what you entered.',
+  validation_failed: 'Please check what you entered. Place codes look like *, MH-* or MH-LATUR.',
+  satellite_unavailable: 'The satellite service did not answer. Try again in a few minutes.',
   agent_exists: 'An agent with this mobile number already exists.',
   phone_is_farmer: 'This number belongs to a farmer. One number can have only one role.',
   org_unknown: 'That FPO was not found. Refresh the page.',
@@ -245,6 +246,7 @@ type VersionInput = {
   subsidyBp: number;
   enrolmentCutoff: string;
   waitingPeriodDays: number;
+  eligibleDistricts?: string[];
   rules: {
     phases: { id: string; from: string; to: string; weightPct: number }[];
     slabs: { level: number; threshold: number; payoutPctOfPhase: number }[];
@@ -271,6 +273,7 @@ export function NewVersion({
     subsidyPct: String(from.subsidyBp / 100),
     cutoff: String(from.enrolmentCutoff).slice(0, 10),
     waiting: String(from.waitingPeriodDays),
+    places: (from.eligibleDistricts ?? ['*']).join(', '),
     phases: from.rules.phases.map((p) => ({ ...p })),
     slabs: from.rules.slabs.map((s) => ({ ...s })),
   }));
@@ -297,6 +300,10 @@ export function NewVersion({
             subsidyBp: Math.round(Number(f.subsidyPct) * 100),
             enrolmentCutoff: f.cutoff,
             waitingPeriodDays: Number(f.waiting),
+            eligibleDistricts: f.places
+              .split(/[\s,]+/)
+              .map((x) => x.trim().toUpperCase())
+              .filter(Boolean),
             phases: f.phases.map((p) => ({ ...p, weightPct: Number(p.weightPct) })),
             slabs: f.slabs.map((s) => ({
               ...s,
@@ -315,11 +322,20 @@ export function NewVersion({
       }}
     >
       <h2 style={{ margin: 0 }}>
-        New version{' '}
-        <small>
-          copied from v{'{'}current{'}'}; a second person must publish it
-        </small>
+        New version <small>copied from the current version; a second person must publish it</small>
       </h2>
+      <label style={{ display: 'grid', gap: 4 }}>
+        Open in
+        <input
+          value={f.places}
+          onChange={(e) => setF({ ...f, places: e.target.value })}
+          placeholder="*"
+        />
+        <small className="adm-muted">
+          * = all of India · MH-* = a whole state · MH-LATUR, MH-BEED = chosen districts
+          (comma-separated)
+        </small>
+      </label>
       <div className="row">
         <label>
           Season
@@ -856,14 +872,15 @@ export function AnswerGrievance({ id }: { id: string }) {
   );
 }
 
-/** Record the result of checking a field against the 7/12 land record. */
+/** Record the result of checking a field against the state land record. */
 export function CheckField({ id }: { id: string }) {
   const router = useRouter();
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function go(decision: 'VERIFIED' | 'REJECTED') {
-    if (note.trim().length < 3) return setErr('Add a short note, e.g. "7/12 name and area match".');
+    if (note.trim().length < 3)
+      return setErr('Add a short note, e.g. "land record name and area match".');
     setBusy(true);
     setErr(null);
     try {
@@ -882,7 +899,7 @@ export function CheckField({ id }: { id: string }) {
         maxLength={300}
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="7/12 name, survey no. and area match"
+        placeholder="Land record name, survey no. and area match"
         style={{
           font: 'inherit',
           padding: '6px 8px',
@@ -1064,6 +1081,31 @@ export function AgentToggle({ id, status, name }: { id: string; status: string; 
       }}
     >
       {off ? 'Disable' : 'Enable'}
+    </button>
+  );
+}
+
+/** Run the satellite crop check on one field (newest clear Sentinel-2 scene; can take up to a minute). */
+export function CropCheck({ id, again }: { id: string; again?: boolean }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      className="adm-btn line"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          await adminCall('POST', `fields/${id}/crop-check`);
+          router.refresh();
+        } catch (e) {
+          alert(say(e));
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      {busy ? 'Checking satellite…' : again ? 'Check again' : 'Check by satellite'}
     </button>
   );
 }

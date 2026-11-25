@@ -22,11 +22,15 @@ type Grievance = {
 };
 
 const CATEGORIES = ['NO_PAYOUT', 'LATE_PAYOUT', 'WRONG_DETAILS', 'PRIVACY', 'OTHER'] as const;
-const day = (s: string) =>
-  new Date(s).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+const day = (s: string, lang: string) =>
+  new Date(s).toLocaleDateString(`${lang}-IN`, {
+    day: 'numeric',
+    month: 'short',
+    numberingSystem: 'latn',
+  });
 
 function Help() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const policyId = useSearchParams().get('policy') ?? undefined;
   const [items, setItems] = useState<Grievance[] | null>(null);
   const [category, setCategory] = useState(policyId ? 'NO_PAYOUT' : '');
@@ -77,7 +81,7 @@ function Help() {
                 <span className="fig" style={{ fontWeight: 600, fontSize: 20 }}>
                   {t('help.got', { ticket: sent.ticketNo })}
                 </span>
-                <span className="s">{t('help.by', { date: day(sent.dueAt) })}</span>
+                <span className="s">{t('help.by', { date: day(sent.dueAt, lang) })}</span>
               </div>
             </div>
           ) : null}
@@ -136,7 +140,7 @@ function Help() {
                   {g.response ? (
                     <p className="g-answer">{g.response}</p>
                   ) : (
-                    <p className="small">{t('help.answerBy', { date: day(g.dueAt) })}</p>
+                    <p className="small">{t('help.answerBy', { date: day(g.dueAt, lang) })}</p>
                   )}
                 </article>
               ))}

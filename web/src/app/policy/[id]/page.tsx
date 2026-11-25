@@ -24,7 +24,7 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
   const last = p.phasePlan.at(-1)!;
   const total = daysBetween(first.from, last.to);
   const today = todayIso();
-  const { t } = await getT();
+  const { t, lang } = await getT();
   const ph = (id: string) => t(`phase.${id}` as Key) || phaseName(id);
   const todayPct = Math.min(100, Math.max(0, ((daysBetween(first.from, today) - 1) / total) * 100));
 
@@ -37,7 +37,7 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
         <div
           className="tl"
           role="img"
-          aria-label={`Season timeline from ${day(first.from)} to ${day(last.to)}. ${p.phasePlan.map((x) => `${ph(x.id)} ${daysBetween(x.from, x.to)} days`).join(', ')}.`}
+          aria-label={`Season timeline from ${day(first.from, false, lang)} to ${day(last.to, false, lang)}. ${p.phasePlan.map((x) => `${ph(x.id)} ${daysBetween(x.from, x.to)} days`).join(', ')}.`}
         >
           <div className="bar">
             {p.phasePlan.map((x) => (
@@ -53,9 +53,9 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
           </div>
           <div className="lab">
             {p.phasePlan.map((x) => (
-              <span key={x.id}>{day(x.from)}</span>
+              <span key={x.id}>{day(x.from, false, lang)}</span>
             ))}
-            <span>{day(last.to)}</span>
+            <span>{day(last.to, false, lang)}</span>
           </div>
         </div>
         <p className="board-sub fig" style={{ fontSize: 15 }}>
@@ -85,7 +85,7 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
               <div className="t">
                 {ph(x.id)}
                 <span>
-                  {day(x.from)} – {day(x.to)}
+                  {day(x.from, false, lang)} – {day(x.to, false, lang)}
                 </span>
               </div>
               <div className="r">
@@ -141,7 +141,7 @@ export default async function PolicyPage({ params }: { params: Promise<{ id: str
                   {flood
                     ? `${num1(e.indexValue)} mm`
                     : t('pol.belowNormal', { pct: num1(e.indexValue) })}{' '}
-                  · {t('pol.checked', { date: day(e.detectedAt) })}
+                  · {t('pol.checked', { date: day(e.detectedAt, false, lang) })}
                 </span>
               </div>
             </div>

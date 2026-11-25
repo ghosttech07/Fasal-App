@@ -12,7 +12,7 @@ import { useT } from '@/i18n/client';
 import type { Key } from '@/i18n';
 
 type Crop = { code: string; namesI18n: unknown };
-type Season = { code: string; namesI18n: unknown };
+type Season = { code: string; namesI18n: unknown; crops?: string[] };
 type Plot = { id: string };
 
 const ORDER = ['GRAM', 'WHEAT', 'JOWAR', 'TUR', 'SOYBEAN', 'COTTON'];
@@ -47,13 +47,16 @@ export default function CropPage() {
       .catch((e) => setError(messageFor(e, t)));
   }, []);
 
+  const open = seasons.find((s) => s.code === season)?.crops;
+  // Only crops with a cover open in the chosen season (all crops if the API did not say).
+  const shown = open ? crops.filter((c) => open.includes(c.code)) : crops;
   const name = crops.find((c) => c.code === crop);
   return (
     <main className="screen">
       <StepBoard back={{ href: '/', label: t('c.home') }} title={t('crop.title')} />
       <div className="work" style={{ gap: 14 }}>
         <div className="crops" role="group" aria-label="Crop">
-          {crops.map((c) => (
+          {shown.map((c) => (
             <button
               key={c.code}
               type="button"
@@ -82,7 +85,10 @@ export default function CropPage() {
                 type="button"
                 className="chip"
                 aria-pressed={season === s.code}
-                onClick={() => setSeason(s.code)}
+                onClick={() => {
+                  setSeason(s.code);
+                  if (crop && s.crops && !s.crops.includes(crop)) setCrop(null);
+                }}
               >
                 {season === s.code ? <Check size={16} aria-hidden="true" /> : null}
                 {(s.namesI18n as Record<string, string>)?.[lang] ?? en(s.namesI18n)}

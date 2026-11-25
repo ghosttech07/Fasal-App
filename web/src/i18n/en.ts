@@ -405,6 +405,50 @@ export const en = {
   'help.sending': 'Sending',
   'err.account_disabled':
     'This account has been switched off. Please contact your FPO or FasalShield.',
+
+  // field agent
+  'ag.role': 'Field agent {code} · {org}',
+  'ag.farmers': 'Farmers',
+  'ag.pinned': 'Field pinned',
+  'ag.covered': 'Covered',
+  'ag.yours': 'Your farmers',
+  'ag.empty': 'No farmers yet. Enrol the first one: it takes about three minutes with them.',
+  'ag.acres': '{n} acres',
+  'ag.field': 'Field',
+  'ag.upi': 'UPI',
+  'ag.cover': 'Cover',
+  'ag.enrol': 'Enrol a farmer',
+  'ag.enrolSub': 'With the farmer next to you · about three minutes',
+  'ag.phone': 'Farmer’s mobile number',
+  'ag.phoneHint': 'The farmer signs in with this number later to buy cover and get paid.',
+  'ag.name': 'Farmer’s full name',
+  'ag.where': 'Where is the farm',
+  'ag.lang': 'Farmer’s language',
+  'ag.langHint': 'Their app, messages and SMS will be in this language.',
+  'ag.readThis': 'Read this to the farmer',
+  'ag.notice':
+    '“We use your name, phone and field location only to give you cover and send you money. Only your insurer sees it. You can ask us to delete it.”',
+  'ag.agrees': 'The farmer heard this in their language and agrees',
+  'ag.enrolBtn': 'Enrol and pin the field',
+  'ag.exists':
+    'This number is already registered. The farmer can sign in with it on their own phone.',
+  'ag.back': 'Your farmers',
+  'ag.enrolled': 'Enrolled',
+  'ag.consentLang': 'Consent given · language {lang}',
+  'ag.fieldPinned': 'Field pinned',
+  'ag.fieldLine': '{acres} acres · ±{m} m · {date}',
+  'ag.flagged': ' · flagged for a land check',
+  'ag.pinHow': 'Stand in the field with the farmer and pin it by GPS.',
+  'ag.pinAnother': 'Pin another field',
+  'ag.pinNow': 'Pin the field now',
+  'ag.upiHow': 'The farmer’s own UPI ID, in their name.',
+  'ag.linkUpi': 'Link UPI now',
+  'ag.buys': 'Farmer buys cover on their phone',
+  'ag.buysReady':
+    'Ask the farmer to open FasalShield and sign in with their number. Their setup is done; they choose a crop and pay from their own UPI.',
+  'ag.buysWait': 'After the field and UPI are done.',
+  'ag.noMoney':
+    'You never collect money. The farmer pays the premium from their own UPI app, and payouts go only to their UPI ID.',
 } as const;
 
 export type Key = keyof typeof en;
