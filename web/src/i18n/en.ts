@@ -8,6 +8,8 @@ export const en = {
   'c.next': 'Next',
   'c.skip': 'Skip',
   'c.tagline': 'Crop cover that pays when the rain fails',
+  'c.tapSkip': 'Tap to skip',
+  'c.demo': 'Demo · test data only, no real money',
   'c.language': 'Language',
 
   // language picker

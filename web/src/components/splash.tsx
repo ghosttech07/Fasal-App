@@ -137,7 +137,7 @@ export function Splash() {
           <div className="tagline">{t('c.tagline')}</div>
         </div>
       </div>
-      <div className="skip">Tap to skip</div>
+      <div className="skip">{t('c.tapSkip')}</div>
     </div>
   );
 }

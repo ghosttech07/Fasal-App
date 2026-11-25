@@ -7,7 +7,7 @@ import { Splash } from '@/components/splash';
 import { NetStatus } from '@/components/net-status';
 import { RegisterSW } from '@/components/register-sw';
 import { cookies } from 'next/headers';
-import { asLang, dictFor, LANG_COOKIE } from '@/i18n';
+import { asLang, dictFor, LANG_COOKIE, makeT } from '@/i18n';
 import { LangProvider } from '@/i18n/client';
 
 // Self-hosted at build time by next/font: no third-party font request on the farmer's data plan.
@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           }}
         />
         {process.env.NEXT_PUBLIC_DEMO === '1' ? (
-          <div className="demo-strip">Demo · test data only, no real money</div>
+          <div className="demo-strip">{makeT(dictFor(lang))('c.demo')}</div>
         ) : null}
         <LangProvider value={{ lang, dict: dictFor(lang), chosen: !!raw }}>
           <NetStatus />
