@@ -35,8 +35,13 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/welcome', req.url));
 
   if (isPublic)
-    return access || refresh ? NextResponse.redirect(new URL('/', req.url)) : NextResponse.next();
-  if (access) return NextResponse.next();
+    return access || refresh
+      ? NextResponse.redirect(new URL(homeFor(access), req.url))
+      : NextResponse.next();
+  if (access) {
+    const wrong = misplaced(req.nextUrl.pathname, access);
+    return wrong ? NextResponse.redirect(new URL(wrong, req.url)) : NextResponse.next();
+  }
 
   const tokens = refresh ? await refreshTokens(refresh) : null;
   if (!tokens) {
@@ -45,11 +50,39 @@ export async function middleware(req: NextRequest) {
     if (refresh) clearTokenCookies(res);
     return res;
   }
+  const wrong = misplaced(req.nextUrl.pathname, tokens.accessToken);
   // Hand the new access token to this same render as well as to the browser.
   req.cookies.set(ACCESS_COOKIE, tokens.accessToken);
-  const res = NextResponse.next({ request: { headers: req.headers } });
+  const res = wrong
+    ? NextResponse.redirect(new URL(wrong, req.url))
+    : NextResponse.next({ request: { headers: req.headers } });
   setTokenCookies(res, tokens);
   return res;
+}
+
+/**
+ * Role from the access token, for routing only (the API verifies the signature and enforces roles itself).
+ * Agents use /agent; farmers use everything else.
+ */
+function roleOf(token: string | undefined): string | null {
+  try {
+    const part = token?.split('.')[1];
+    if (!part) return null;
+    return (
+      (JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))) as { role?: string }).role ??
+      null
+    );
+  } catch {
+    return null;
+  }
+}
+const homeFor = (token: string | undefined) => (roleOf(token) === 'AGENT' ? '/agent' : '/');
+function misplaced(path: string, token: string): string | null {
+  const agentPath = path === '/agent' || path.startsWith('/agent/');
+  const agent = roleOf(token) === 'AGENT';
+  if (agent && !agentPath) return '/agent';
+  if (!agent && agentPath) return '/';
+  return null;
 }
 
 /** Admin portal guard: its own staff session (password + authenticator code), never the farmer one. */

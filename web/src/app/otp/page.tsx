@@ -37,9 +37,13 @@ export default function OtpPage() {
     setBusy(true);
     setError(null);
     try {
-      await post('/api/session/verify', { requestId: pending.requestId, otp });
+      const r = await post<{ user?: { role?: string } }>('/api/session/verify', {
+        requestId: pending.requestId,
+        otp,
+      });
       handoff.set('fs_otp', '');
-      window.location.replace('/'); // full load: the new session cookie and a fresh server render, no client cache
+      // Field agents have their own home; farmers go to theirs.
+      window.location.replace(r.user?.role === 'AGENT' ? '/agent' : '/'); // full load: the new session cookie and a fresh server render, no client cache
     } catch (err) {
       setError(messageFor(err, t));
       setBusy(false);

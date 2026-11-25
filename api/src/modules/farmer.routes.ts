@@ -15,10 +15,10 @@ import { findDistrict } from '@fasalshield/shared/geo';
 export const farmerRouter = Router();
 farmerRouter.use(requireRole('FARMER'));
 
-const NOTICE_VERSION = 'consent-v1';
+export const NOTICE_VERSION = 'consent-v1';
 const WALLET_COOLING_OFF_MS = 72 * 3_600_000;
 
-async function me(farmerId: string) {
+export async function me(farmerId: string) {
   const farmer = await prisma.farmer.findUniqueOrThrow({
     where: { id: farmerId },
     include: {
@@ -178,28 +178,28 @@ farmerRouter.patch('/', async (req, res) => {
   res.json(await me(farmerId));
 });
 
-/** FR-06 plot pin → 0.05° grid cell (FR-19). */
-farmerRouter.post('/plots', async (req, res) => {
-  const input = body(
-    req,
-    indiaLatLngSchema.extend({
-      accuracyM: z.number().nonnegative().max(500),
-      areaAcres: z.number().positive().max(50),
-      captureMethod: z.enum(['GPS_PIN', 'WALK', 'DRAW']).default('GPS_PIN'),
-      boundary: z.array(indiaLatLngSchema).min(4).max(200).optional(),
-      surveyNo: z
-        .string()
-        .trim()
-        .regex(/^[0-9A-Za-z/ -]{1,20}$/, 'Survey number: digits, letters, / or -')
-        .optional(),
-    }),
-  );
+/** A field pin (FR-06); shared by the farmer's own app and agent-assisted enrolment. */
+export const plotInputSchema = indiaLatLngSchema.extend({
+  accuracyM: z.number().nonnegative().max(500),
+  areaAcres: z.number().positive().max(50),
+  captureMethod: z.enum(['GPS_PIN', 'WALK', 'DRAW']).default('GPS_PIN'),
+  boundary: z.array(indiaLatLngSchema).min(4).max(200).optional(),
+  surveyNo: z
+    .string()
+    .trim()
+    .regex(/^[0-9A-Za-z/ -]{1,20}$/, 'Survey number: digits, letters, / or -')
+    .optional(),
+});
+
+export type Actor = { type: 'FARMER' | 'AGENT'; id: string };
+
+/** Saves a field pin → 0.05° grid cell (FR-19), with the duplicate-field checks; audited with who did it. */
+export async function createPlot(farmerId: string, input: z.infer<typeof plotInputSchema>, actor: Actor) {
   if (input.accuracyM >= 50) throw new HttpError(422, 'gps_accuracy_too_low');
-  const farmerId = req.principal!.sub;
   const farmer = await prisma.farmer.findUniqueOrThrow({ where: { id: farmerId } });
   const cell = cellFor(input.lat, input.lng);
   const flag = await duplicateCheck(farmerId, cell.id, input.lat, input.lng, input.surveyNo);
-  const plot = await prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx) => {
     await tx.gridCell.upsert({
       where: { id: cell.id },
       create: {
@@ -232,18 +232,23 @@ farmerRouter.post('/plots', async (req, res) => {
     });
     await audit(
       {
-        actorType: 'FARMER',
-        actorId: farmerId,
+        actorType: actor.type,
+        actorId: actor.id,
         action: 'PLOT_CREATED',
         entityType: 'Plot',
         entityId: created.id,
-        diff: { gridCellId: cell.id, flagged: !!flag },
+        diff: { farmerId, gridCellId: cell.id, flagged: !!flag },
       },
       tx,
     );
     return created;
   });
-  res.status(201).json(plot);
+}
+
+farmerRouter.post('/plots', async (req, res) => {
+  const input = body(req, plotInputSchema);
+  const farmerId = req.principal!.sub;
+  res.status(201).json(await createPlot(farmerId, input, { type: 'FARMER', id: farmerId }));
 });
 
 /** Fraud checks on a new field: the same survey number, or a pin within 30 m, already used by another farmer. */
@@ -277,9 +282,7 @@ farmerRouter.get('/plots', async (req, res) => {
 });
 
 /** FR-05 UPI link with mock name verification; a changed wallet gets a 72h cooling-off (FRD-07). */
-farmerRouter.post('/wallets', async (req, res) => {
-  const { vpa } = body(req, z.object({ vpa: vpaSchema }));
-  const farmerId = req.principal!.sub;
+export async function linkWallet(farmerId: string, vpa: string, actor: Actor) {
   const result = await payments.verifyVpa(vpa);
   if (!result.valid) throw new HttpError(422, 'vpa_invalid');
 
@@ -301,16 +304,22 @@ farmerRouter.post('/wallets', async (req, res) => {
     });
     await audit(
       {
-        actorType: 'FARMER',
-        actorId: farmerId,
+        actorType: actor.type,
+        actorId: actor.id,
         action: 'WALLET_LINKED',
         entityType: 'Wallet',
         entityId: wallet.id,
-        diff: { sharedWithOtherFarmers: sharedWith },
+        diff: { farmerId, sharedWithOtherFarmers: sharedWith },
       },
       tx,
     );
   });
+}
+
+farmerRouter.post('/wallets', async (req, res) => {
+  const { vpa } = body(req, z.object({ vpa: vpaSchema }));
+  const farmerId = req.principal!.sub;
+  await linkWallet(farmerId, vpa, { type: 'FARMER', id: farmerId });
   res.status(201).json(await me(farmerId));
 });
 

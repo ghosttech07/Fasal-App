@@ -1853,3 +1853,8 @@ a.acc-row {
   color: var(--ink);
   min-height: 44px;
 }
+
+/* Field agent: per-farmer progress chips */
+.ag-steps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.ag-step { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 2px 8px; border-radius: 6px; background: #eceff1; color: #4b5751; }
+.ag-step.ok { background: var(--ok-bg); color: var(--board); font-weight: 600; }
