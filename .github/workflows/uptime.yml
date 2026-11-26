@@ -1,0 +1,47 @@
+# Uptime check (free): every 30 minutes, checks the live API (with its database) and the farmer sign-in page.
+# When something is down it opens one GitHub issue (GitHub emails the repo owner); when it is back it closes it.
+name: Uptime
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check API, database and website
+        id: check
+        run: |
+          fail=""
+          api=$(curl -s -m 30 https://fasal-app-pi.vercel.app/health || true)
+          echo "API: $api"
+          echo "$api" | grep -q '"db":"up"' || fail="$fail API or database is down ($api)."
+          web=$(curl -s -o /dev/null -m 30 -w '%{http_code}' https://fasal-app-nps2.vercel.app/login || true)
+          echo "Website /login: $web"
+          [ "$web" = "200" ] || fail="$fail Website returned $web."
+          echo "fail=$fail" >> "$GITHUB_OUTPUT"
+
+      - name: Open or close the outage issue
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          FAIL: ${{ steps.check.outputs.fail }}
+        with:
+          script: |
+            const title = 'FasalShield is down';
+            const { data: open } = await github.rest.issues.listForRepo({ ...context.repo, state: 'open', labels: 'uptime' });
+            const issue = open.find((i) => i.title === title);
+            const fail = (process.env.FAIL || '').trim();
+            if (fail && !issue) {
+              await github.rest.issues.create({ ...context.repo, title, labels: ['uptime'], body: `${fail}\n\nChecked ${new Date().toISOString()}.` });
+            } else if (fail && issue) {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: issue.number, body: `Still down: ${fail} (${new Date().toISOString()})` });
+            } else if (!fail && issue) {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: issue.number, body: `Back up at ${new Date().toISOString()}.` });
+              await github.rest.issues.update({ ...context.repo, issue_number: issue.number, state: 'closed' });
+            }
