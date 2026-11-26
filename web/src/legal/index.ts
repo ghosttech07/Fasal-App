@@ -12,6 +12,7 @@ import { ml } from './ml';
 import { or } from './or';
 import { pa } from './pa';
 import { as } from './as';
+import { ur } from './ur';
 
 export * from './types';
-export const LEGAL: Record<Lang, LegalSet> = { en, hi, mr, bn, te, ta, gu, kn, ml, or, pa, as };
+export const LEGAL: Record<Lang, LegalSet> = { en, hi, mr, bn, te, ta, gu, kn, ml, or, pa, as, ur };

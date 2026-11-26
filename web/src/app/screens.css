@@ -227,7 +227,7 @@
 }
 .map-tag {
   position: absolute;
-  left: 10px;
+  inset-inline-start: 10px;
   bottom: 10px;
   z-index: 500;
 }
@@ -286,7 +286,7 @@
 .crop .ok {
   position: absolute;
   top: 6px;
-  right: 6px;
+  inset-inline-end: 6px;
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -867,8 +867,8 @@ html[data-splash='skip'] .splash {
   gap: 2px;
 }
 .tally > div + div {
-  padding-left: 12px;
-  border-left: 1px solid var(--board-rule);
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid var(--board-rule);
 }
 .tally dt {
   font-size: 13px;
@@ -944,7 +944,7 @@ a.acc-row {
 }
 .acc-badge {
   position: absolute;
-  right: -4px;
+  inset-inline-end: -4px;
   bottom: -4px;
   width: 18px;
   height: 18px;
@@ -1146,7 +1146,7 @@ a.acc-row {
 .pay-table td {
   padding: 10px 6px;
   border-bottom: 1px solid var(--rule);
-  text-align: right;
+  text-align: end;
   font-size: 16px;
 }
 .pay-table thead th {
@@ -1155,7 +1155,7 @@ a.acc-row {
   font-weight: 500;
 }
 .pay-table th[scope='row'] {
-  text-align: left;
+  text-align: start;
   font-weight: 600;
 }
 .pay-table th[scope='row'] span {
@@ -1170,7 +1170,7 @@ a.acc-row {
   font-size: 18px;
 }
 .pay-table th:first-child {
-  text-align: left;
+  text-align: start;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1421,7 +1421,7 @@ a.acc-row {
   font-size: 52px;
   line-height: 1;
   color: #e8a35a;
-  margin-right: 8px;
+  margin-inline-end: 8px;
 }
 .ob-bar {
   position: relative;
@@ -1811,7 +1811,7 @@ a.acc-row {
   align-content: center;
   gap: 2px;
   padding: 8px 14px;
-  text-align: left;
+  text-align: start;
   background: var(--surface);
   color: var(--ink);
   border: 1.5px solid var(--rule);

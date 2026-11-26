@@ -134,13 +134,13 @@ a {
   font-variant-numeric: tabular-nums;
 }
 .rates caption {
-  text-align: left;
+  text-align: start;
   color: var(--chalk-2);
   font-size: 15px;
   padding-bottom: 6px;
 }
 .rates th {
-  text-align: left;
+  text-align: start;
   font-weight: 500;
   font-size: 14px;
   color: var(--chalk-2);
@@ -149,7 +149,7 @@ a {
 }
 .rates th:last-child,
 .rates td:last-child {
-  text-align: right;
+  text-align: end;
 }
 .rates td {
   padding: 10px 0;
@@ -235,8 +235,8 @@ a {
   font-size: 24px;
   font-weight: 500;
   color: var(--ink-2);
-  padding-right: 12px;
-  border-right: 1px solid var(--rule);
+  padding-inline-end: 12px;
+  border-inline-end: 1px solid var(--rule);
 }
 .error {
   display: flex;
@@ -352,4 +352,23 @@ a {
     border-left: 1px solid var(--rule);
     border-right: 1px solid var(--rule);
   }
+}
+
+/* Right-to-left languages (Urdu): arrows and chevrons point the way the reader moves. */
+[dir='rtl']
+  :is(.lucide-arrow-right, .lucide-arrow-left, .lucide-chevron-right, .lucide-chevron-left) {
+  transform: scaleX(-1);
+}
+/* Phone numbers, codes and UPI IDs are always written left to right, even in an Urdu screen. */
+[dir='rtl'] :is(input[type='tel'], input[inputmode='numeric'], input[placeholder='name@okaxis']),
+[dir='rtl'] :has(> .prefix) {
+  direction: ltr;
+}
+[dir='rtl']
+  :is(
+    input[type='tel'],
+    input[inputmode='numeric'],
+    input[placeholder='name@okaxis']
+  )::placeholder {
+  text-align: start;
 }

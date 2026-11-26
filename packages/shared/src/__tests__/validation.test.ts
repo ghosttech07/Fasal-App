@@ -72,10 +72,12 @@ describe('maskPhone', () => {
 });
 
 describe('other schemas', () => {
-  it('languageCodeSchema accepts the 12 offered languages only', () => {
+  it('languageCodeSchema accepts the 13 offered languages only', () => {
     expect(languageCodeSchema.safeParse('mr').success).toBe(true);
     expect(languageCodeSchema.safeParse('te').success).toBe(true);
-    expect(languageCodeSchema.safeParse('ur').success).toBe(false);
+    expect(languageCodeSchema.safeParse('ur').success).toBe(true);
+    expect(languageCodeSchema.safeParse('ks').success).toBe(false);
+    expect(languageCodeSchema.safeParse('fr').success).toBe(false);
   });
 
   it('indiaLatLngSchema rejects coordinates outside India', () => {

@@ -8,6 +8,7 @@ import { NetStatus } from '@/components/net-status';
 import { RegisterSW } from '@/components/register-sw';
 import { cookies } from 'next/headers';
 import { asLang, dictFor, LANG_COOKIE, makeT } from '@/i18n';
+import { isRtl } from '@fasalshield/shared';
 import { LangProvider } from '@/i18n/client';
 
 // Self-hosted at build time by next/font: no third-party font request on the farmer's data plan.
@@ -42,7 +43,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const raw = (await cookies()).get(LANG_COOKIE)?.value;
   const lang = asLang(raw);
   return (
-    <html lang={lang} className={`${body.variable} ${figures.variable}`} suppressHydrationWarning>
+    <html
+      lang={lang}
+      dir={isRtl(lang) ? 'rtl' : 'ltr'}
+      className={`${body.variable} ${figures.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         {/* Before paint: skip the opening animation when this load came from inside the app (e.g. after sign-in); arriving from the landing page still plays it. */}
         <script

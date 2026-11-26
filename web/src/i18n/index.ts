@@ -16,6 +16,7 @@ import { or } from './or';
 import { pa } from './pa';
 import { ta } from './ta';
 import { te } from './te';
+import { ur } from './ur';
 import * as b2 from './b2';
 import * as b3 from './b3';
 import * as b4 from './b4';
@@ -26,11 +27,13 @@ export const LANG_COOKIE = 'fs_lang';
 export const LANG_LIST = SUPPORTED_LANGUAGES.map((c) => LANGUAGES[c]);
 
 // Batch 1 (welcome, sign-in) + batch 2 (setup, buying, home, policy), merged per language.
-const B1: Record<Exclude<Lang, 'en'>, Dict> = { hi, bn, te, mr, ta, gu, kn, ml, or, pa, as };
+const B1: Record<Exclude<Lang, 'en'>, Dict> = { hi, bn, te, mr, ta, gu, kn, ml, or, pa, as, ur };
+// Later batches by language; Urdu came after them and keeps every string in ur.ts.
+const later = (b: Partial<Record<Lang, Dict>>, l: Lang): Dict => b[l] ?? {};
 const DICTS = Object.fromEntries(
   (Object.keys(B1) as Exclude<Lang, 'en'>[]).map((l) => [
     l,
-    { ...B1[l], ...b2[l], ...b3[l], ...b4[l] },
+    { ...B1[l], ...later(b2, l), ...later(b3, l), ...later(b4, l) },
   ]),
 ) as Record<Lang, Dict>;
 DICTS.en = en;

@@ -1,9 +1,22 @@
 /**
- * Languages offered across India: English plus the 11 most widely spoken Indian languages among farmers.
- * Adding a language = add it here + a translation catalogue in web/src/i18n; no other code change (NFR-07).
- * shortcut: Urdu, Kashmiri and other right-to-left / smaller languages are not offered yet; add with RTL layout.
+ * Languages offered across India: English, the 11 most widely spoken Indian languages among farmers, and Urdu
+ * (written right to left). Adding a language = add it here + a translation catalogue in web/src/i18n (NFR-07).
  */
-export const SUPPORTED_LANGUAGES = ['en', 'hi', 'bn', 'te', 'mr', 'ta', 'gu', 'kn', 'ml', 'or', 'pa', 'as'] as const;
+export const SUPPORTED_LANGUAGES = [
+  'en',
+  'hi',
+  'bn',
+  'te',
+  'mr',
+  'ta',
+  'gu',
+  'kn',
+  'ml',
+  'or',
+  'pa',
+  'as',
+  'ur',
+] as const;
 export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number];
 
 export const DEFAULT_LANGUAGE: LanguageCode = 'en';
@@ -20,7 +33,18 @@ export interface LanguageMeta {
   englishName: string;
   /** BCP-47 locale used for Intl number/date formatting. */
   locale: string;
-  script: 'Latin' | 'Devanagari' | 'Bengali' | 'Telugu' | 'Tamil' | 'Gujarati' | 'Kannada' | 'Malayalam' | 'Odia' | 'Gurmukhi';
+  script:
+    | 'Latin'
+    | 'Devanagari'
+    | 'Bengali'
+    | 'Telugu'
+    | 'Tamil'
+    | 'Gujarati'
+    | 'Kannada'
+    | 'Malayalam'
+    | 'Odia'
+    | 'Gurmukhi'
+    | 'Arabic';
 }
 
 const meta = (
@@ -43,7 +67,11 @@ export const LANGUAGES: Readonly<Record<LanguageCode, LanguageMeta>> = {
   or: meta('or', 'ଓଡ଼ିଆ', 'Odia', 'Odia'),
   pa: meta('pa', 'ਪੰਜਾਬੀ', 'Punjabi', 'Gurmukhi'),
   as: meta('as', 'অসমীয়া', 'Assamese', 'Bengali'),
+  ur: meta('ur', 'اردو', 'Urdu', 'Arabic'),
 };
+
+/** Languages written right to left: the page gets dir="rtl" and the layout mirrors. */
+export const isRtl = (lang: LanguageCode): boolean => lang === 'ur';
 
 export function isLanguageCode(value: unknown): value is LanguageCode {
   return typeof value === 'string' && (SUPPORTED_LANGUAGES as readonly string[]).includes(value);
